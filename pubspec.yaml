@@ -1,0 +1,64 @@
+name: chanting_app
+description: "念佛計步 App"
+publish_to: 'none'
+version: 1.0.0+4
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  pedometer: ^4.2.0
+  vibration: ^3.2.1
+  audioplayers: ^6.8.1
+  shared_preferences: ^2.5.6
+  sqflite: ^2.4.4+2
+  dio: ^5.11.1
+  provider: ^6.1.5+1
+  fl_chart: ^1.2.0
+  table_calendar: ^3.3.0
+  intl: ^0.20.3
+  permission_handler: ^11.3.1
+  csv: ^8.0.0
+  pdf: ^3.13.1
+  printing: ^5.13.1
+  share_plus: ^10.0.0
+  path_provider: ^2.1.4
+
+  # 🔥 新增：檔案選擇器 (用於健康備份上傳)
+  file_picker: ^8.0.0
+
+  # Cookie 管理
+  cookie_jar: ^4.0.8
+  dio_cookie_manager: ^3.1.1
+
+  # 🔥 匯出圖片專用
+  screenshot: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  # 🔥 App 圖示自動生成套件
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/sounds/
+    - assets/fonts/NotoSansTC-Regular.ttf
+    # 🔥 開放 assets 根目錄
+    - assets/
+
+# 🔥 App 圖示設定
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/app_icon.png"
+  min_sdk_android: 21
