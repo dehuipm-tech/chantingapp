@@ -354,7 +354,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final serverGroupCode = loginData['group_code']?.toString() ?? invite;
     
     // 2. 查詢會員資訊
-    final memberInfo = await ApiService.instance.getMemberInfo(memberNo);
+    // 請確保你在這個檔案裡有拿到 groupCode 這個變數
+    final memberInfo = await ApiService.instance.getMemberInfo(memberNo, serverGroupCode);
     
     // 🔥 如果抓不到資料，代表沒有這個會員
     if (memberInfo == null) {
