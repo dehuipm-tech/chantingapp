@@ -102,18 +102,21 @@ class _HealthScreenState extends State<HealthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgWarm,
-      appBar: AppBar(
-        title: const Text('❤️ 健康紀錄'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return GestureDetector( // 👈 加上這層
+      onTap: () => FocusScope.of(context).unfocus(), // 👈 點擊空白處收鍵盤
+      child: Scaffold(
+        backgroundColor: AppColors.bgWarm,
+        appBar: AppBar(
+          title: const Text('❤️ 健康紀錄'),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+        ),
+        body: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, // 👈 滑動時收鍵盤
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // 🔥 圖表
             Container(
               margin: const EdgeInsets.only(bottom: 24),
@@ -171,16 +174,36 @@ class _HealthScreenState extends State<HealthScreen> {
                     ],
                   ),
                   const Divider(),
-                  TextField(controller: _hrCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: '❤️ 平均心跳 (bpm)', hintText: '例：72')),
+                  TextField(
+                    controller: _hrCtrl, 
+                    keyboardType: TextInputType.number, 
+                    textInputAction: TextInputAction.done, // 👈 加上這行
+                    onSubmitted: (_) => FocusScope.of(context).unfocus(), // 👈 加上這行
+                    decoration: const InputDecoration(labelText: '❤️ 平均心跳 (bpm)', hintText: '例：72')
+                  ),
                   const SizedBox(height: 12),
-                  TextField(controller: _bpCtrl, decoration: const InputDecoration(labelText: '🩺 血壓 (mmHg)', hintText: '例：120/80')),
+                  TextField(
+                    controller: _bpCtrl, 
+                    textInputAction: TextInputAction.done, // 👈 加上這行
+                    onSubmitted: (_) => FocusScope.of(context).unfocus(), // 👈 加上這行
+                    decoration: const InputDecoration(labelText: '🩺 血壓 (mmHg)', hintText: '例：120/80')
+                  ),
                   const SizedBox(height: 12),
-                  TextField(controller: _calCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: '🔥 消耗熱量 (kcal)', hintText: '例：480')),
+                  TextField(
+                    controller: _calCtrl, 
+                    keyboardType: TextInputType.number, 
+                    textInputAction: TextInputAction.done, // 👈 加上這行
+                    onSubmitted: (_) => FocusScope.of(context).unfocus(), // 👈 加上這行
+                    decoration: const InputDecoration(labelText: '🔥 消耗熱量 (kcal)', hintText: '例：480')
+                  ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: _saveRecord,
+                      onPressed: () {
+                        FocusScope.of(context).unfocus(); // 👈 先收起鍵盤
+                        _saveRecord(); // 再儲存
+                      },
                       icon: const Icon(Icons.save),
                       label: const Text('儲存今日紀錄'),
                       style: ElevatedButton.styleFrom(

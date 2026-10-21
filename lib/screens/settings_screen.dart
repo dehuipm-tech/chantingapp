@@ -738,8 +738,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           decoration: _buildPurpleInputDecoration('2026-10-19'),
           keyboardType: TextInputType.datetime,
-          textInputAction: TextInputAction.done, // 👈 鍵盤顯示完成
-          onSubmitted: (_) => FocusScope.of(context).unfocus(), // 👈 點擊完成時收鍵盤
+          textInputAction: TextInputAction.done, // 👈 強制顯示完成
+          onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(), // 👈 強制收鍵盤
         ),
         
         const SizedBox(height: 24),
@@ -813,8 +813,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           decoration: _buildPurpleInputDecoration('請輸入數量'),
           keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.done, // 👈 鍵盤顯示完成
-          onSubmitted: (_) => FocusScope.of(context).unfocus(), // 👈 點擊完成時收鍵盤
+          textInputAction: TextInputAction.done, // 👈 強制顯示完成
+          onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(), // 👈 強制收鍵盤
         ),
         
         const SizedBox(height: 24),
@@ -832,8 +832,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           controller: _remarkCtrl,
           style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           decoration: _buildPurpleInputDecoration('輸入備註...'),
-          textInputAction: TextInputAction.done, // 👈 鍵盤顯示完成
-          onSubmitted: (_) => FocusScope.of(context).unfocus(), // 👈 點擊完成時收鍵盤
+          textInputAction: TextInputAction.done, // 👈 強制顯示完成
+          onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(), // 👈 強制收鍵盤
         ),
         
         const SizedBox(height: 32),
@@ -843,7 +843,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: _isUploading ? null : () {
-              FocusScope.of(context).unfocus(); // 👈 點擊上傳時，強制收起鍵盤
+              FocusManager.instance.primaryFocus?.unfocus(); // 👈 點擊上傳時，強制收鍵盤
               _uploadManualData(auth);
             },
             icon: _isUploading
@@ -851,7 +851,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 : const Icon(Icons.cloud_upload, size: 24, color: Color(0xFF5A3A7A)),
             label: Text(_isUploading ? '上傳中...' : '確認上傳', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5A3A7A))),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD1C4E9), // 截圖中的淺紫色
+              backgroundColor: const Color(0xFFD1C4E9),
               foregroundColor: const Color(0xFF5A3A7A),
               padding: const EdgeInsets.symmetric(vertical: 18),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
