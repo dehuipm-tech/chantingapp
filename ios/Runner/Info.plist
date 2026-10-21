@@ -66,5 +66,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSMotionUsageDescription</key>
+	<string>我們需要讀取您的計步數據，以便記錄念佛次數。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>我們需要存取您的相簿，以便儲存或選擇圖片。</string>
+
+
+
 </dict>
 </plist>

@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:io'; // 🔥 處理 HttpClient 和憑證
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart'; // 🔥 關鍵：引入 Dio 的 IO 轉接器
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+
 
 class ApiService {
   ApiService._() {
@@ -12,7 +15,9 @@ class ApiService {
   }
   
   static final ApiService instance = ApiService._();
-  static const String baseUrl = 'https://tw-proxy-ei.dhp.com.tw';
+  
+  // 🔥 1. 這裡改成新的主網域路徑 (結尾不要加斜線)
+  static const String baseUrl = 'https://www.dhp.com.tw/tw-proxy-ei/';
   
   late Dio _dio;
 
@@ -23,6 +28,13 @@ class ApiService {
       receiveTimeout: const Duration(seconds: 15),
       headers: {'Content-Type': 'application/json'},
     ));
+
+    // 🔥 針對 OPPO/vivo 等中國品牌手機的終極解法：強制忽略 SSL 憑證錯誤
+    (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      return client;
+    };
 
     final appDocDir = await getApplicationDocumentsDirectory();
     final cookiePath = '${appDocDir.path}/.cookies/';
@@ -55,7 +67,7 @@ class ApiService {
     }
   }
 
-    /// 上傳紀錄 (單筆)
+  /// 上傳紀錄 (單筆)
   Future<bool> postChanting({
     required String groupCode,
     required String memberNo,
@@ -75,9 +87,9 @@ class ApiService {
         }
       };
 
-      final res = await _dio.post('/add_chanting.php?action=addChantingRecord', data: payload);
+      // 🔥 2. 去掉前面的斜線
+      final res = await _dio.post('add_chanting.php?action=addChantingRecord', data: payload);
       
-      // 🔥 只要 HTTP 200 就當作成功（不管後端回傳什麼格式）
       if (res.statusCode == 200) {
         return true; 
       }
@@ -112,7 +124,8 @@ class ApiService {
         }
       };
 
-      final res = await _dio.post('/add_chanting.php?action=addChantingRecord', data: payload);
+      // 🔥 3. 去掉前面的斜線
+      final res = await _dio.post('add_chanting.php?action=addChantingRecord', data: payload);
       
       if (res.statusCode == 200) {
         return res.data;
@@ -128,9 +141,11 @@ class ApiService {
   Future<Map<String, dynamic>?> loginGroup({required String inviteCode}) async {
     try {
       final payload = {'login_type': 'group', 'invite_code': inviteCode};
-      final res = await _dio.post('/index.php?action=login', data: payload);
+      
+      // 🔥 4. 去掉前面的斜線
+      final res = await _dio.post('index.php?action=login', data: payload);
 
-      print('🔥 登入 API 回應: ${res.statusCode} - ${res.data}'); // 👈 加這行
+      print('🔥 登入 API 回應: ${res.statusCode} - ${res.data}');
       
       if (res.statusCode == 200) {
         final json = res.data;
@@ -138,14 +153,16 @@ class ApiService {
       }
       return null;
     } catch (e) {
+      print('❌ 登入例外錯誤: $e'); 
       return null;
     }
   }
 
-  /// 查詢會員 (改為回傳完整資訊，包含狀態)
+  /// 查詢會員
   Future<Map<String, dynamic>?> getMemberInfo(String memberNo) async {
     try {
-      final res = await _dio.get('/index.php?action=getMemberByNoForChanting&no=$memberNo');
+      // 🔥 5. 去掉前面的斜線
+      final res = await _dio.get('index.php?action=getMemberByNoForChanting&no=$memberNo');
       if (res.statusCode == 200) {
         final json = res.data;
         if (json['success'] == true) {
@@ -161,12 +178,9 @@ class ApiService {
     }
   }
 
-
-
-    /// 每日紀錄 (修正為統一走 index.php)
+  /// 每日紀錄 (這裡是直接寫死全網址，所以不用改)
   Future<Map<String, dynamic>?> fetchDailyHistory(String memberNo, int year, int month, String groupCode) async {
     try {
-      // 🔥 改回 index.php，確保路由正確
       final url = Uri.parse('$baseUrl/index.php?action=getMemberChantingDailyHistory&memberNo=$memberNo&year=$year&month=$month&group=$groupCode');
       debugPrint('🚀 [http] 準備抓日曆: $url');
 
@@ -183,10 +197,9 @@ class ApiService {
     }
   }
 
-  /// 年度統計 (修正為統一走 index.php)
+  /// 年度統計 (這裡是直接寫死全網址，所以不用改)
   Future<Map<String, dynamic>?> fetchYearStats(String memberNo, int year, String groupCode) async {
     try {
-      // 🔥 改回 index.php，確保路由正確
       final url = Uri.parse('$baseUrl/index.php?action=getMemberChantingHistory&memberNo=$memberNo&year=$year&group=$groupCode');
       debugPrint('🚀 [http] 準備抓年度: $url');
 
@@ -202,8 +215,6 @@ class ApiService {
       return null;
     }
   }
-
-
 
   /// 修改雲端紀錄
   Future<bool> updateCloudRecord(
@@ -221,9 +232,9 @@ class ApiService {
         }
       };
 
-      final res = await _dio.post('/update_chanting.php?action=updateChantingRecord', data: body);
+      // 🔥 6. 去掉前面的斜線
+      final res = await _dio.post('update_chanting.php?action=updateChantingRecord', data: body);
       
-      // 🔥 只要 HTTP 200 就當作成功，不管後端回傳什麼格式
       if (res.statusCode == 200) {
         return true; 
       }
@@ -234,12 +245,7 @@ class ApiService {
     }
   }
 
-
-  // ============================================================
-  // 🔥 以下為新增的 API 方法（配合新的設定頁登入/註冊功能）
-  // ============================================================
-
-  /// 個人登入（會員編號 + 登入碼 3~10 位數字）
+  /// 個人登入
   Future<Map<String, dynamic>?> loginPersonal({
     required String memberNo,
     required String phoneLast3,
@@ -252,7 +258,8 @@ class ApiService {
         'item_mode': 'mixed',
       };
       
-      final res = await _dio.post('/index.php?action=login', data: payload);
+      // 🔥 7. 去掉前面的斜線
+      final res = await _dio.post('index.php?action=login', data: payload);
       
       if (res.statusCode == 200) {
         final json = res.data;
@@ -265,12 +272,12 @@ class ApiService {
     }
   }
 
-  /// 註冊會員 / 加入團體
+  /// 註冊會員
   Future<Map<String, dynamic>?> registerMember({
     required String name,
     required String phone,
     required String groupInvite,
-    required String loginType, // 'personal' 或 'group'
+    required String loginType,
   }) async {
     try {
       final payload = {
@@ -281,11 +288,11 @@ class ApiService {
         'group_invite': groupInvite,
       };
 
-      // 註冊 API 在 index.php 會以 JSON body 接收
-      final res = await _dio.post('/index.php?action=registerMember', data: payload);
+      // 🔥 8. 去掉前面的斜線
+      final res = await _dio.post('index.php?action=registerMember', data: payload);
 
       if (res.statusCode == 200) {
-        return res.data; // 回傳完整 JSON 讓 UI 判斷 success
+        return res.data; 
       }
       return null;
     } catch (e) {
@@ -300,8 +307,9 @@ class ApiService {
     required String phone,
   }) async {
     try {
+      // 🔥 9. 去掉前面的斜線
       final res = await _dio.get(
-        '/index.php?action=findMember&name=${Uri.encodeComponent(name)}&phone=${Uri.encodeComponent(phone)}',
+        'index.php?action=findMember&name=${Uri.encodeComponent(name)}&phone=${Uri.encodeComponent(phone)}',
       );
       
       if (res.statusCode == 200) {
@@ -313,5 +321,4 @@ class ApiService {
       return null;
     }
   }
-
 }
