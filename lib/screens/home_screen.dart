@@ -21,8 +21,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // 0 = 跟著步伐, 1 = 定速念佛, 2 = 定時念佛, 3 = 拜佛
-  int _selectedMode = 0;
-  int _todaySteps = 0; // 👈 新增這個變數來儲存即時步數
+  int _selectedMode = 0; 
 
   // 首頁大字卡生理數值
   String _todayBP = '--/--';
@@ -55,15 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadTodayHealth();
-    
-    // 🔥 啟動計步器，並即時更新首頁步數
-    PedometerService.instance.start(onStep: () {
-      if (mounted) {
-        setState(() {
-          _todaySteps = PedometerService.instance.todaySteps; 
-        });
-      }
-    });
   }
 
   // 🔥 唯一的 _loadTodayHealth
@@ -905,12 +895,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // 彈出極具質感的綠色成功通知
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            '✅ $snackBarLabel ${chant.chantCount} 次已同步！\n👣 這次總共走了 ${chant.stepCount} 步！',
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-          ),
+          content: Text('✅ $snackBarLabel ${chant.chantCount} 次已同步寫入本機日誌並加入上傳佇列！', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           backgroundColor: AppColors.green,
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -1027,8 +1014,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Row(
           children: [
-            // 👇 把這裡的 chant.stepCount 改成 _todaySteps
-            _buildStatBox('👣 今日步數', '$_todaySteps', '步'),
+            _buildStatBox('👣 今日步數', '${chant.stepCount}', '步'),
             const SizedBox(width: 10),
             _buildStatBox('❤️ 平均心跳', _todayHR, 'bpm'), // 🟢 連動顯示
           ],
