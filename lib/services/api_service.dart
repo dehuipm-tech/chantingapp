@@ -17,7 +17,7 @@ class ApiService {
   static final ApiService instance = ApiService._();
   
   // 🔥 1. 這裡改成新的主網域路徑 (結尾不要加斜線)
-  static const String baseUrl = 'https://www.dhp.com.tw/tw-proxy-ei/';
+  static const String baseUrl = 'https://www.dhp.com.tw/tw-proxy-ei-ios/';
   
   late Dio _dio;
 

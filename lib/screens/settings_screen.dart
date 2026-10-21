@@ -720,160 +720,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildManualUploadForm(AuthProvider auth) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 📅 日期
-        Row(
+    Widget _buildLoggedInView(AuthProvider auth) {
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(), // 👈 點擊畫面空白處自動收起鍵盤
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, // 👈 往下滑動時收起鍵盤
+        padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 100),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.calendar_today_outlined, color: Color(0xFF5A3A7A), size: 20),
-            const SizedBox(width: 8),
-            Text('日期', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF5A3A7A).withOpacity(0.8))),
-          ],
-        ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: _dateCtrl,
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          decoration: _buildPurpleInputDecoration('2026-10-19'),
-          keyboardType: TextInputType.datetime,
-        ),
-        
-        const SizedBox(height: 24),
-        
-        // 📿 品項
-        Row(
-          children: [
-            const Icon(Icons.spa_outlined, color: Color(0xFF5A3A7A), size: 20),
-            const SizedBox(width: 8),
-            Text('請選擇共修品項', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF5A3A7A).withOpacity(0.8))),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (_isLoadingItems)
-          const Center(child: Padding(padding: EdgeInsets.all(12.0), child: CircularProgressIndicator()))
-        else if (_activeItems.isEmpty)
-          const Text('⚠️ 目前無啟用的品項', style: TextStyle(color: Colors.grey))
-                  else
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: _activeItems.map((item) {
-                final name = item['name']?.toString() ?? '未命名';
-                final icon = item['icon']?.toString() ?? '📿';
-                final isSelected = _selectedItemName == name;
-                
-                return GestureDetector(
-                  onTap: () => setState(() {
-                    _selectedItemName = name;
-                    _selectedItemId = item['id']?.toString() ?? '';
-                    _selectedItemIcon = icon;
-                  }),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    // 🔥 修改這裡：把原本的 horizontal: 20, vertical: 12 縮小
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      // 🔥 未選中：極淺的紫灰色底。選中：深紫色底。
-                      color: isSelected ? const Color(0xFF5A3A7A) : const Color(0xFFF3E8FF),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFF5A3A7A) : const Color(0xFFE1D4F0), 
-                        width: 1.5
-                      ),
-                      boxShadow: isSelected ? [BoxShadow(color: const Color(0xFF5A3A7A).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
-                    ),
-                    child: Text(
-                      '$icon $name',
-                      style: TextStyle(
-                        // 🔥 未選中：深紫色字。選中：白色字。
-                        color: isSelected ? Colors.white : const Color(0xFF5A3A7A),
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                        fontSize: 14,
-                      ),
+            // 💜 會員卡片 (深紫漸層)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6B4B8B), Color(0xFF4A2A6A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [BoxShadow(color: const Color(0xFF4A2A6A).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    child: const Icon(Icons.person, color: Colors.white, size: 32),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(auth.state.memberName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                          child: Text('🏷️ ${auth.state.groupName} · ${auth.state.memberNo}', style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              }).toList(),
+                  IconButton(
+                    onPressed: () => auth.logout(),
+                    icon: const Icon(Icons.logout, color: Colors.white70, size: 24),
+                  ),
+                ],
+              ),
             ),
-        
-        const SizedBox(height: 24),
-
-        // 🔢 數量
-        Row(
-          children: [
-            const Icon(Icons.tag, color: Color(0xFF5A3A7A), size: 20),
-            const SizedBox(width: 8),
-            Text('數量', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF5A3A7A).withOpacity(0.8))),
+            
+            const SizedBox(height: 32),
+            
+            // 📤 標題與表單
+            _buildManualUploadForm(auth),
+            const SizedBox(height: 40),
           ],
         ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: _countCtrl,
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          decoration: _buildPurpleInputDecoration('請輸入數量'),
-          keyboardType: TextInputType.number,
-        ),
-        
-        const SizedBox(height: 24),
-
-        // 📝 備註
-        Row(
-          children: [
-            const Icon(Icons.notes, color: Color(0xFF5A3A7A), size: 20),
-            const SizedBox(width: 8),
-            Text('備註 (選填)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF5A3A7A).withOpacity(0.8))),
-          ],
-        ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: _remarkCtrl,
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          decoration: _buildPurpleInputDecoration('輸入備註...'),
-        ),
-        
-        const SizedBox(height: 32),
-
-        // 📤 上傳按鈕 (淺紫色底 + 深色字)
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _isUploading ? null : () => _uploadManualData(auth),
-            icon: _isUploading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Color(0xFF5A3A7A), strokeWidth: 2))
-                : const Icon(Icons.cloud_upload, size: 24, color: Color(0xFF5A3A7A)),
-            label: Text(_isUploading ? '上傳中...' : '確認上傳', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5A3A7A))),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD1C4E9), // 截圖中的淺紫色
-              foregroundColor: const Color(0xFF5A3A7A),
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              elevation: 0,
-            ),
-          ),
-        ),
-        
-        const SizedBox(height: 16),
-
-        // ☁️ 查看雲端
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const CloudCalendarScreen()));
-            },
-            icon: const Icon(Icons.cloud_outlined, color: Color(0xFF5A3A7A), size: 24),
-            label: const Text('查看雲端共修紀錄', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF5A3A7A))),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              side: const BorderSide(color: Color(0xFFE8DDD0), width: 1.5),
-              backgroundColor: Colors.white,
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
