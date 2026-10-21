@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:file_picker/file_picker.dart'; // 🔥 新增：檔案選擇器
+import 'package:file_picker/file_picker.dart';
 
 import '../models/health_record.dart';
 import '../services/storage_service.dart';
@@ -102,8 +102,8 @@ class _HealthScreenState extends State<HealthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector( // 👈 加上這層
-      onTap: () => FocusScope.of(context).unfocus(), // 👈 點擊空白處收鍵盤
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         backgroundColor: AppColors.bgWarm,
         appBar: AppBar(
@@ -112,204 +112,203 @@ class _HealthScreenState extends State<HealthScreen> {
           foregroundColor: Colors.white,
         ),
         body: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, // 👈 滑動時收鍵盤
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            // 🔥 圖表
-            Container(
-              margin: const EdgeInsets.only(bottom: 24),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.borderSoft),
+              // 🔥 圖表
+              Container(
+                margin: const EdgeInsets.only(bottom: 24),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.borderSoft),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('📈 90天健康數據疊加圖', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                    const SizedBox(height: 16),
+                    HealthTrajectoryChart(
+                      records: _records,
+                      recentDates: _records.keys.toList()..sort(),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('📈 90天健康數據疊加圖', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                  const SizedBox(height: 16),
-                  HealthTrajectoryChart(
-                    records: _records,
-                    recentDates: _records.keys.toList()..sort(),
-                  ),
-                ],
-              ),
-            ),
 
-            // 🔥 輸入表單
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.borderSoft),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('📅 日期', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMid)),
-                      TextButton(
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: _selectedDate,
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime(2030),
-                          );
-                          if (picked != null) {
-                            setState(() => _selectedDate = picked);
-                            _loadRecordForDate();
-                          }
+              // 🔥 輸入表單
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.borderSoft),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('📅 日期', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textMid)),
+                        TextButton(
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _selectedDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2030),
+                            );
+                            if (picked != null) {
+                              setState(() => _selectedDate = picked);
+                              _loadRecordForDate();
+                            }
+                          },
+                          child: Text(
+                            '${_selectedDate.year}/${_selectedDate.month}/${_selectedDate.day}',
+                            style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    TextField(
+                      controller: _hrCtrl, 
+                      keyboardType: TextInputType.number, 
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                      decoration: const InputDecoration(labelText: '❤️ 平均心跳 (bpm)', hintText: '例：72')
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _bpCtrl, 
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                      decoration: const InputDecoration(labelText: '🩺 血壓 (mmHg)', hintText: '例：120/80')
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _calCtrl, 
+                      keyboardType: TextInputType.number, 
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                      decoration: const InputDecoration(labelText: '🔥 消耗熱量 (kcal)', hintText: '例：480')
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                          _saveRecord();
                         },
-                        child: Text(
-                          '${_selectedDate.year}/${_selectedDate.month}/${_selectedDate.day}',
-                          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                        icon: const Icon(Icons.save),
+                        label: const Text('儲存今日紀錄'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                       ),
-                    ],
-                  ),
-                  const Divider(),
-                  TextField(
-                    controller: _hrCtrl, 
-                    keyboardType: TextInputType.number, 
-                    textInputAction: TextInputAction.done, // 👈 加上這行
-                    onSubmitted: (_) => FocusScope.of(context).unfocus(), // 👈 加上這行
-                    decoration: const InputDecoration(labelText: '❤️ 平均心跳 (bpm)', hintText: '例：72')
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _bpCtrl, 
-                    textInputAction: TextInputAction.done, // 👈 加上這行
-                    onSubmitted: (_) => FocusScope.of(context).unfocus(), // 👈 加上這行
-                    decoration: const InputDecoration(labelText: '🩺 血壓 (mmHg)', hintText: '例：120/80')
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _calCtrl, 
-                    keyboardType: TextInputType.number, 
-                    textInputAction: TextInputAction.done, // 👈 加上這行
-                    onSubmitted: (_) => FocusScope.of(context).unfocus(), // 👈 加上這行
-                    decoration: const InputDecoration(labelText: '🔥 消耗熱量 (kcal)', hintText: '例：480')
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        FocusScope.of(context).unfocus(); // 👈 先收起鍵盤
-                        _saveRecord(); // 再儲存
-                      },
-                      icon: const Icon(Icons.save),
-                      label: const Text('儲存今日紀錄'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            
-            const SizedBox(height: 24),
+              
+              const SizedBox(height: 24),
 
-            // 🔥 備份卡片
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.borderSoft)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('💾 健康紀錄備份', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                  const SizedBox(height: 12),
-                  
-                  // 下載備份
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _exportBackup,
-                      icon: const Icon(Icons.download),
-                      label: const Text('下載健康備份（換手機用）'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // 🔥 新增：上傳備份
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _importBackup,
-                      icon: const Icon(Icons.upload_file),
-                      label: const Text('上傳健康備份（還原資料）'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-                  const Text('💡 備份包含：心跳、血壓、熱量\n💡 換手機時，用這個備份檔帶走', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // 🔥 列表
-            const Text('📋 健康紀錄列表', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-            const SizedBox(height: 12),
-
-            if (_records.isEmpty)
-              const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('目前無健康紀錄', style: TextStyle(color: Colors.grey))))
-            else
-              ..._records.entries.map((entry) {
-                final date = entry.key;
-                final r = entry.value;
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.borderSoft),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('📅 $date', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                            const SizedBox(height: 4),
-                            Text('❤️ ${r.heartRate} bpm · 🩺 ${r.bpText} · 🔥 ${r.calories} kcal', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
-                          ],
+              // 🔥 備份卡片
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.borderSoft)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('💾 健康紀錄備份', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                    const SizedBox(height: 12),
+                    
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _exportBackup,
+                        icon: const Icon(Icons.download),
+                        label: const Text('下載健康備份（換手機用）'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                        onPressed: () => _deleteRecord(date),
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _importBackup,
+                        icon: const Icon(Icons.upload_file),
+                        label: const Text('上傳健康備份（還原資料）'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
                       ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                    ),
 
-            const SizedBox(height: 40),
-          ],
+                    const SizedBox(height: 8),
+                    const Text('💡 備份包含：心跳、血壓、熱量\n💡 換手機時，用這個備份檔帶走', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // 🔥 列表
+              const Text('📋 健康紀錄列表', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+              const SizedBox(height: 12),
+
+              if (_records.isEmpty)
+                const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('目前無健康紀錄', style: TextStyle(color: Colors.grey))))
+              else
+                ..._records.entries.map((entry) {
+                  final date = entry.key;
+                  final r = entry.value;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.borderSoft),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('📅 $date', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                              const SizedBox(height: 4),
+                              Text('❤️ ${r.heartRate} bpm · 🩺 ${r.bpText} · 🔥 ${r.calories} kcal', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                          onPressed: () => _deleteRecord(date),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
@@ -344,19 +343,15 @@ class _HealthScreenState extends State<HealthScreen> {
     }
   }
 
-  // ============================================================
-  // 🔥 新增：匯入健康備份
-  // ============================================================
   Future<void> _importBackup() async {
     try {
-      // 1. 讓使用者選擇 JSON 檔案
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
       );
 
       if (result == null || result.files.single.path == null) {
-        return; // 使用者取消選擇
+        return;
       }
 
       final file = File(result.files.single.path!);
@@ -364,7 +359,6 @@ class _HealthScreenState extends State<HealthScreen> {
       
       final Map<String, dynamic> backupData = jsonDecode(jsonString);
 
-      // 檢查備份檔格式是否正確
       if (backupData['health'] == null || backupData['health'] is! Map) {
         throw Exception('備份檔格式不正確，找不到 health 資料');
       }
@@ -372,7 +366,6 @@ class _HealthScreenState extends State<HealthScreen> {
       final Map<String, dynamic> healthData = backupData['health'];
       int importCount = 0;
 
-      // 2. 逐筆透過 fromJson 轉換並寫入本地資料庫
       for (var entry in healthData.entries) {
         final date = entry.key;
         final recordMap = entry.value;
@@ -384,7 +377,7 @@ class _HealthScreenState extends State<HealthScreen> {
         }
       }
 
-      await _loadRecords(); // 重新載入畫面
+      await _loadRecords();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -438,7 +431,6 @@ class HealthTrajectoryChart extends StatelessWidget {
       aspectRatio: 1.7,
       child: Stack(
         children: [
-          // ── 底層：熱量卡路里 (右軸) ──
           BarChart(
             BarChartData(
               alignment: BarChartAlignment.center,
@@ -477,8 +469,6 @@ class HealthTrajectoryChart extends StatelessWidget {
               ],
             ),
           ),
-
-          // ── 上層：心跳與血壓 (左軸) ──
           LineChart(
             LineChartData(
               minX: 0,

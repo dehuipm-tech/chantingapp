@@ -14,23 +14,14 @@ class PedometerService {
   void Function()? _onStep;
 
   bool get isRunning => _running;
-  int get todaySteps => _todaySteps; // 👈 這是你要的 Getter
+  int get todaySteps => _todaySteps;
 
-  /// 啟動計步器
   Future<bool> start({required void Function() onStep}) async {
-    // 🔥 不管有沒有在跑，永遠更新最新的 onStep 回呼！
-    _onStep = onStep; 
+    _onStep = onStep;
 
-    if (_running) return true; // 如果已經在跑，直接回傳成功，但已更新回呼
+    if (_running) return true;
 
     try {
-      // 1. 先使用 pedometer 套件本身請求權限（iOS 必須）
-      final permission = await Pedometer.requestPermissions();
-      if (!permission) {
-        debugPrint('⚠️ 未授權計步器權限 (iOS)');
-      }
-
-      // 2. 如果是 Android，再請求 activityRecognition
       if (defaultTargetPlatform == TargetPlatform.android) {
         final status = await Permission.activityRecognition.request();
         if (status.isDenied || status.isPermanentlyDenied) {
@@ -60,3 +51,21 @@ class PedometerService {
       return false;
     }
   }
+
+  void _handleStepCount(StepCount event) {
+    if (event.steps > _todaySteps) {
+      final diff = event.steps - _todaySteps;
+      _todaySteps = event.steps;
+      for (int i = 0; i < diff; i++) {
+        _onStep?.call();
+      }
+    }
+  }
+
+  Future<void> stop() async {
+    await _sub?.cancel();
+    _sub = null;
+    _running = false;
+    debugPrint('⏹ 計步器已停止');
+  }
+}
