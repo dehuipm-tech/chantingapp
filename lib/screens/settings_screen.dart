@@ -207,7 +207,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         TextField(
           controller: _loginInviteCtrl,
           style: const TextStyle(color: Colors.black87, fontSize: 16),
-          decoration: inputDecoration.copyWith(hintText: '請輸入群組代碼（例：G01）'),
+          decoration: inputDecoration.copyWith(hintText: '請輸入群組代碼（例：G02）'),
           textCapitalization: TextCapitalization.characters,
         ),
         const SizedBox(height: 16),
@@ -217,7 +217,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         TextField(
           controller: _loginMemberNoCtrl,
           style: const TextStyle(color: Colors.black87, fontSize: 16),
-          decoration: inputDecoration.copyWith(hintText: '請輸入您的會員編號（例：01101）'),
+          decoration: inputDecoration.copyWith(hintText: '請輸入您的會員編號（例：02144）'),
           keyboardType: TextInputType.number,
         ),
         const SizedBox(height: 6),
