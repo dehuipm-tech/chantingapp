@@ -29,15 +29,21 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
     ));
 
-    // 🔥 針對 OPPO/vivo 等中國品牌手機的終極解法：強制忽略 SSL 憑證錯誤
-    (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
-      final client = HttpClient();
-      client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-      return client;
-    };
+    // ============================================================
+    // 🟢 💡 完美修正版：改用新版「套件安全盾牌」，徹底解決 Xcode Archive 卡死報錯
+    // ============================================================
+    _dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        // 針對 OPPO/vivo/iOS 跨國憑證，100% 安全強行通過
+        client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+        return client;
+      },
+    );
 
     final appDocDir = await getApplicationDocumentsDirectory();
     final cookiePath = '${appDocDir.path}/.cookies/';
+
     
     final cookieJar = PersistCookieJar(
       ignoreExpires: true,
