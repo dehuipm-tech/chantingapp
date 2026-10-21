@@ -88,7 +88,8 @@ class ApiService {
       };
 
       // 🔥 2. 去掉前面的斜線
-      final res = await _dio.post('add_chanting.php?action=addChantingRecord', data: payload);
+      // 強制把 group 灌在 URL 參數上
+      final res = await _dio.post('add_chanting.php?action=addChantingRecord&group=$groupCode', data: payload);
       
       if (res.statusCode == 200) {
         return true; 
@@ -124,8 +125,8 @@ class ApiService {
         }
       };
 
-      // 🔥 3. 去掉前面的斜線
-      final res = await _dio.post('add_chanting.php?action=addChantingRecord', data: payload);
+      // 🔥 3. 去掉前面的斜線，並強制加上 group 參數
+      final res = await _dio.post('add_chanting.php?action=addChantingRecord&group=$groupCode', data: payload);
       
       if (res.statusCode == 200) {
         return res.data;
@@ -158,11 +159,11 @@ class ApiService {
     }
   }
 
-  /// 查詢會員
-  Future<Map<String, dynamic>?> getMemberInfo(String memberNo) async {
+  /// 查詢會員（把 groupCode 加進去）：
+  Future<Map<String, dynamic>?> getMemberInfo(String memberNo, String groupCode) async {
     try {
-      // 🔥 5. 去掉前面的斜線
-      final res = await _dio.get('index.php?action=getMemberByNoForChanting&no=$memberNo');
+      // 🔥 5. 去掉前面的斜線，並加上 group 參數
+      final res = await _dio.get('index.php?action=getMemberByNoForChanting&no=$memberNo&group=$groupCode');
       if (res.statusCode == 200) {
         final json = res.data;
         if (json['success'] == true) {
@@ -218,7 +219,7 @@ class ApiService {
 
   /// 修改雲端紀錄
   Future<bool> updateCloudRecord(
-    String id, int count, String remark, {String? itemName, String? icon}
+    String id, int count, String remark, {String? itemName, String? icon, required String groupCode}
   ) async {
     try {
       final body = {
@@ -232,8 +233,8 @@ class ApiService {
         }
       };
 
-      // 🔥 6. 去掉前面的斜線
-      final res = await _dio.post('update_chanting.php?action=updateChantingRecord', data: body);
+      // 🔥 6. 去掉前面的斜線，並強制加上 group 參數
+      final res = await _dio.post('update_chanting.php?action=updateChantingRecord&group=$groupCode', data: body);
       
       if (res.statusCode == 200) {
         return true; 
