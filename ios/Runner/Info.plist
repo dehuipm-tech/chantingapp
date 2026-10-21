@@ -70,6 +70,10 @@
 	<string>我們需要讀取您的計步數據，以便記錄念佛次數。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>我們需要存取您的相簿，以便儲存或選擇圖片。</string>
+	<key>NSCameraUsageDescription</key>
+	<string>我們需要使用相機功能，以便您拍攝或掃描所需圖片。</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>我們需要存取您的位置，以提供更精確的計步與運動記錄。</string>
 
 
 
