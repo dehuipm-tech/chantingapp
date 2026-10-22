@@ -11,6 +11,7 @@ import '../models/chant_record.dart';
 import '../models/health_record.dart';
 import '../models/daily_log.dart';
 import '../services/storage_service.dart';
+import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -55,11 +56,19 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadTodayHealth();
+    
     PedometerService.instance.start(onStep: () {
       if (mounted) {
         setState(() {
-          _todaySteps = PedometerService.instance.todaySteps;
+          _todaySteps = PedometerService.instance.todaySteps; 
         });
+      }
+    });
+    
+    // 🔥 加上這行，每秒印出目前步數
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        print('👣 [測試] 目前首頁步數: $_todaySteps, 服務步數: ${PedometerService.instance.todaySteps}');
       }
     });
   }
