@@ -300,28 +300,70 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               _buildSpeedBox('🏃', '快', '90/分', 2, isTimer: true),
               const SizedBox(width: 8),
-              // 🔥 把「更快」換成「自訂」
-              _buildCustomOptionBox(
-                _customTimeSpeedValue.isNotEmpty ? '$_customTimeSpeedValue/分' : '自訂',
-                3, 
-                _selectedTimerSpeedIndex, 
-                () => _showInputDialog('自訂速度 (每分鐘幾聲)', _timerSpeedCtrl, '聲/分', (val) {
-                  final bpm = int.tryParse(val) ?? 60;
-                  setState(() {
-                    _selectedTimerSpeedIndex = 3;
-                    _customTimeSpeedValue = val;
-                    _timerSpeedPerMinute = bpm;
-                  });
-                }, onCancel: () {
-                  setState(() {
-                    _customTimeSpeedValue = '';
-                    _timerSpeedPerMinute = 60;
-                    if (_selectedTimerSpeedIndex == 3) _selectedTimerSpeedIndex = 1;
-                  });
-                })
+              // 🔥 第四個方塊：自訂速度（有鞋子圖示，高度與其他一致）
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _showInputDialog('自訂速度 (每分鐘幾聲)', _timerSpeedCtrl, '聲/分', (val) {
+                    final bpm = int.tryParse(val) ?? 60;
+                    setState(() {
+                      _selectedTimerSpeedIndex = 3;
+                      _customTimeSpeedValue = val;
+                      _timerSpeedPerMinute = bpm;
+                    });
+                  }, onCancel: () {
+                    setState(() {
+                      _customTimeSpeedValue = '';
+                      _timerSpeedPerMinute = 60;
+                      if (_selectedTimerSpeedIndex == 3) _selectedTimerSpeedIndex = 1;
+                    });
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedTimerSpeedIndex == 3 ? const Color(0xFFF3E8FF) : const Color(0xFF6B4B8B),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF9F7AEA) : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text('👣', style: TextStyle(fontSize: 24)),
+                        const SizedBox(height: 6),
+                        Text(
+                          '自訂',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF6B4B8B) : Colors.white,
+                          ),
+                        ),
+                        Text(
+                          _customTimeSpeedValue.isNotEmpty ? '$_customTimeSpeedValue/分' : '點擊設定',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF805AD5) : Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          // 👇 定時念佛的預估視窗 👇
+          _buildEstimateBox(
+            chants: _selectedTimeMinutes() * _timerSpeedPerMinute,
+            minutes: _selectedTimeMinutes(),
+            mets: 1.3, // 念佛 METs
+          ),
+        ],
+      ),
+    );
+  }
           const SizedBox(height: 16),
           // 👇 定時念佛的預估視窗 👇
           _buildEstimateBox(
