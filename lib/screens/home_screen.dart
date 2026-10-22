@@ -11,7 +11,6 @@ import '../models/chant_record.dart';
 import '../models/health_record.dart';
 import '../models/daily_log.dart';
 import '../services/storage_service.dart';
-import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -56,19 +55,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadTodayHealth();
-    
     PedometerService.instance.start(onStep: () {
       if (mounted) {
         setState(() {
-          _todaySteps = PedometerService.instance.todaySteps; 
+          _todaySteps = PedometerService.instance.todaySteps;
         });
-      }
-    });
-    
-    // 🔥 加上這行，每秒印出目前步數
-    Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        print('👣 [測試] 目前首頁步數: $_todaySteps, 服務步數: ${PedometerService.instance.todaySteps}');
       }
     });
   }
@@ -834,10 +825,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await chant.start();
 
-    if (chant.needPedometer) {
-      await PedometerService.instance.start(onStep: () => chant.onStep());
+if (chant.needPedometer) {
+  await PedometerService.instance.start(onStep: () {
+    chant.onStep();
+    if (mounted) {
+      setState(() {
+        _todaySteps = PedometerService.instance.todaySteps;
+      });
     }
-  }
+  });
+}
+
 
   int _speedToInt(String speed) => int.tryParse(speed.split('/').first) ?? 60;
 
@@ -1066,7 +1064,9 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Row(
           children: [
-            _buildStatBox('👣 今日步數', '$_todaySteps', '步'),
+            // 將今日已存的步數，加上本次念佛計步中動態增加的步數
+            _buildStatBox('👣 今日步數', '${_todaySteps + chant.stepCount}', '步'),
+
             const SizedBox(width: 10),
             _buildStatBox('❤️ 平均心跳', _todayHR, 'bpm'),
           ],
