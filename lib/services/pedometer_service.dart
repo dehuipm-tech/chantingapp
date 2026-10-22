@@ -57,7 +57,7 @@ class PedometerService {
     // 1. 第一次收到系統步數時，記錄為基底（例如 77 或 2611）
     if (_baseSteps == -1) {
       _baseSteps = event.steps;
-      return; // 第一次不更新，首頁維持 0
+      return;
     }
 
     // 2. 計算「從這次啟動後」走了幾步
@@ -68,7 +68,7 @@ class PedometerService {
       final diff = current - _todaySteps;
       _todaySteps = current;
       for (int i = 0; i < diff; i++) {
-        _onStep?.call(); 
+        _onStep?.call();
       }
     }
   }

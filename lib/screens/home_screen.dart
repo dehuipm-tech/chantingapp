@@ -32,7 +32,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // ================= 定速念佛設定 =================
   String _currentSpeed = '60/分';
   int _selectedSpeedIndex = 1;    
-  int _selectedMethodIndex = 1;   
+  int _selectedMethodIndex = 1; 
+
+  // 🔥 新增：自訂速度
+  String _customSpeedValue = ''; 
+  final TextEditingController _speedCtrl = TextEditingController();  
 
   // ================= 定時念佛設定 =================
   int _selectedTimeIndex = 0;     
@@ -40,6 +44,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _timeCtrl = TextEditingController();
   int _selectedTimerSpeedIndex = 1; 
   int _timerSpeedPerMinute = 60;
+
+  // 🔥 補上這兩個變數
+  String _customTimeSpeedValue = ''; 
+  final TextEditingController _timerSpeedCtrl = TextEditingController();
+
 
   // ================= 拜佛設定 =================
   int _selectedBowingIndex = 0;   
@@ -90,6 +99,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _timeCtrl.dispose();
+    _timerSpeedCtrl.dispose();
+    _speedCtrl.dispose(); // 👈 補上這行
     _bowingCtrl.dispose();
     _bowingTimeCtrl.dispose();
     super.dispose();
@@ -246,43 +257,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 面板：定速念佛
-  Widget _buildSpeedModeSettings() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-      child: Column(
-        children: [
-          _buildSectionTitle('速度'),
-          Row(
-            children: [
-              _buildSpeedBox('🐢', '慢', '30/分', 0),
-              const SizedBox(width: 8),
-              _buildSpeedBox('🚶', '正常', '60/分', 1),
-              const SizedBox(width: 8),
-              _buildSpeedBox('🏃', '快', '90/分', 2),
-              const SizedBox(width: 8),
-              _buildSpeedBox('🏎️', '更快', '120/分', 3),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildSectionTitle('念佛方式'),
-          Row(
-            children: [
-              _buildMethodBox('🔈', '只有聲音', '不計步', 0),
-              const SizedBox(width: 12),
-              _buildMethodBox('🔈👣', '聲音+步數', '邊走邊念', 1),
-            ],
-          ),
-          
-          // 👇 新增：定速念佛的預估視窗 👇
-          const SizedBox(height: 16),
-          _buildSpeedEstimateBox(),
-        ],
-      ),
-    );
-  }
-
   // 面板：定時念佛
   Widget _buildTimerSettings() {
     return Container(
@@ -327,7 +301,26 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               _buildSpeedBox('🏃', '快', '90/分', 2, isTimer: true),
               const SizedBox(width: 8),
-              _buildSpeedBox('🏎️', '更快', '120/分', 3, isTimer: true),
+              // 🔥 把「更快」換成「自訂」
+              _buildCustomOptionBox(
+                _customTimeSpeedValue.isNotEmpty ? '$_customTimeSpeedValue/分' : '自訂',
+                3, 
+                _selectedTimerSpeedIndex, 
+                () => _showInputDialog('自訂速度 (每分鐘幾聲)', _timerSpeedCtrl, '聲/分', (val) {
+                  final bpm = int.tryParse(val) ?? 60;
+                  setState(() {
+                    _selectedTimerSpeedIndex = 3;
+                    _customTimeSpeedValue = val;
+                    _timerSpeedPerMinute = bpm;
+                  });
+                }, onCancel: () {
+                  setState(() {
+                    _customTimeSpeedValue = '';
+                    _timerSpeedPerMinute = 60;
+                    if (_selectedTimerSpeedIndex == 3) _selectedTimerSpeedIndex = 1;
+                  });
+                })
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -342,6 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  
   // 面板：拜佛
   Widget _buildBowingSettings() {
     return Container(
