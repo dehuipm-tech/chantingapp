@@ -8,28 +8,29 @@ class PedometerService {
   static final PedometerService instance = PedometerService._();
 
   StreamSubscription<StepCount>? _sub;
-  int _baseSteps = -1;
   int _todaySteps = 0;
   bool _running = false;
 
   void Function()? _onStep;
 
   bool get isRunning => _running;
+  int get todaySteps => _todaySteps;
 
-  /// 啟動計步器
   Future<bool> start({required void Function() onStep}) async {
-    if (_running) return true;
     _onStep = onStep;
+    if (_running) return true;
 
-    // 請求活動辨識權限 (Android 10+ 需要)
     try {
-      final status = await Permission.activityRecognition.request();
-      if (status.isDenied || status.isPermanentlyDenied) {
-        debugPrint('⚠️ 未授權活動辨識，計步器不可用');
-        return false;
+      // 🔥 修正：改成正確的權限請求方式
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final status = await Permission.activityRecognition.request();
+        if (status.isDenied || status.isPermanentlyDenied) {
+          debugPrint('⚠️ 未授權活動辨識 (Android)，計步器不可用');
+          return false;
+        }
       }
     } catch (e) {
-      debugPrint('⚠️ 權限請求失敗（模擬器正常）: $e');
+      debugPrint('⚠️ 權限請求失敗: $e');
     }
 
     try {
@@ -52,22 +53,15 @@ class PedometerService {
   }
 
   void _handleStepCount(StepCount event) {
-    if (_baseSteps == -1) {
-      _baseSteps = event.steps;
-    }
-
-    final current = event.steps - _baseSteps;
-
-    if (current > _todaySteps) {
-      final diff = current - _todaySteps;
-      _todaySteps = current;
+    if (event.steps > _todaySteps) {
+      final diff = event.steps - _todaySteps;
+      _todaySteps = event.steps;
       for (int i = 0; i < diff; i++) {
         _onStep?.call();
       }
     }
   }
 
-  /// 停止計步器
   Future<void> stop() async {
     await _sub?.cancel();
     _sub = null;
