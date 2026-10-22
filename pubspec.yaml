@@ -1,7 +1,7 @@
 name: chanting_app
 description: "念佛計步 App"
 publish_to: 'non8e'
-version: 1.0.0+30
+version: 1.0.0+31
 
 environment:
   sdk: ^3.13.5

@@ -300,50 +300,56 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               _buildSpeedBox('🏃', '快', '90/分', 2, isTimer: true),
               const SizedBox(width: 8),
-              // 🔥 自訂速度方塊（有鞋子圖示，高度與其他一致）
+              
+              // 🔥 第四個方塊：自訂速度（有白色鞋子圖示，高度與其他一致）
               Expanded(
                 child: GestureDetector(
-                  onTap: () => _showInputDialog('自訂速度 (每分鐘幾聲)', _timerSpeedCtrl, '聲/分', (val) {
+                  onTap: () => _showInputDialog('自訂速度 (每分鐘幾聲)', _speedCtrl, '聲/分', (val) {
                     final bpm = int.tryParse(val) ?? 60;
                     setState(() {
-                      _selectedTimerSpeedIndex = 3;
-                      _customTimeSpeedValue = val;
-                      _timerSpeedPerMinute = bpm;
+                      _selectedSpeedIndex = 3;
+                      _customSpeedValue = val;
+                      _currentSpeed = '$bpm/分';
                     });
                   }, onCancel: () {
                     setState(() {
-                      _customTimeSpeedValue = '';
-                      _timerSpeedPerMinute = 60;
-                      if (_selectedTimerSpeedIndex == 3) _selectedTimerSpeedIndex = 1;
+                      _customSpeedValue = '';
+                      _currentSpeed = '60/分';
+                      if (_selectedSpeedIndex == 3) _selectedSpeedIndex = 1;
                     });
                   }),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: _selectedTimerSpeedIndex == 3 ? const Color(0xFFF3E8FF) : const Color(0xFF6B4B8B),
+                      color: _selectedSpeedIndex == 3 ? const Color(0xFFF3E8FF) : const Color(0xFF6B4B8B),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF9F7AEA) : Colors.transparent,
+                        color: _selectedSpeedIndex == 3 ? const Color(0xFF9F7AEA) : Colors.transparent,
                         width: 2,
                       ),
                     ),
                     child: Column(
                       children: [
-                        const Text('👣', style: TextStyle(fontSize: 24)),
+                        // 🔥 這裡放白色鞋子
+                        const Text(
+                          '👣',
+                          style: TextStyle(fontSize: 24, color: Colors.white),
+                        ),
                         const SizedBox(height: 6),
                         Text(
                           '自訂',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF6B4B8B) : Colors.white,
+                            color: _selectedSpeedIndex == 3 ? const Color(0xFF6B4B8B) : Colors.white,
                           ),
                         ),
+                        // 🔥 下方文字永遠顯示數值，沒有數值就顯示「點擊設定」
                         Text(
-                          _customTimeSpeedValue.isNotEmpty ? '$_customTimeSpeedValue/分' : '點擊設定',
+                          _customSpeedValue.isNotEmpty ? '$_customSpeedValue/分' : '點擊設定',
                           style: TextStyle(
                             fontSize: 11,
-                            color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF805AD5) : Colors.white70,
+                            color: _selectedSpeedIndex == 3 ? const Color(0xFF805AD5) : Colors.white70,
                           ),
                         ),
                       ],
@@ -351,8 +357,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-            ],
-          ),
           const SizedBox(height: 16),
           // 👇 定時念佛的預估視窗 👇
           _buildEstimateBox(
@@ -785,37 +789,61 @@ class _HomeScreenState extends State<HomeScreen> {
       width: 330,
       child: Row(
         children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: chant.isRunning ? () => _onPause(context) : () => _onResume(context),
-              icon: Icon(chant.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 20),
-              label: Text(chant.isRunning ? '暫停' : '繼續', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: chant.isRunning ? AppColors.orange : AppColors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        // 🔥 自訂速度方塊（白色鞋子，高度與其他一致）
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _showInputDialog('自訂速度 (每分鐘幾聲)', _timerSpeedCtrl, '聲/分', (val) {
+                    final bpm = int.tryParse(val) ?? 60;
+                    setState(() {
+                      _selectedTimerSpeedIndex = 3;
+                      _customTimeSpeedValue = val;
+                      _timerSpeedPerMinute = bpm;
+                    });
+                  }, onCancel: () {
+                    setState(() {
+                      _customTimeSpeedValue = '';
+                      _timerSpeedPerMinute = 60;
+                      if (_selectedTimerSpeedIndex == 3) _selectedTimerSpeedIndex = 1;
+                    });
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedTimerSpeedIndex == 3 ? const Color(0xFFF3E8FF) : const Color(0xFF6B4B8B),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF9F7AEA) : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        // 🔥 白色鞋子
+                        const Text(
+                          '👣',
+                          style: TextStyle(fontSize: 24, color: Colors.white),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '自訂',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF6B4B8B) : Colors.white,
+                          ),
+                        ),
+                        Text(
+                          _customTimeSpeedValue.isNotEmpty ? '$_customTimeSpeedValue/分' : '點擊設定',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF805AD5) : Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => _onFinish(context),
-              icon: const Icon(Icons.stop_rounded, size: 20),
-              label: const Text('結束', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.red,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Future<void> _onStart(BuildContext context) async {
     final chant = context.read<ChantProvider>();
