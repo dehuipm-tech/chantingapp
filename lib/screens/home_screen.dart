@@ -65,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadTodayHealth();
     
-    // 🔥 啟動計步器，並即時更新首頁步數
     PedometerService.instance.start(onStep: () {
       if (mounted) {
         setState(() {

@@ -9,7 +9,7 @@ class PedometerService {
 
   StreamSubscription<StepCount>? _sub;
   int _todaySteps = 0;
-  int _baseSteps = -1; // 🔥 用來記錄基底步數
+  int _baseSteps = -1;
   bool _running = false;
 
   void Function()? _onStep;
@@ -18,15 +18,20 @@ class PedometerService {
   int get todaySteps => _todaySteps;
 
   Future<bool> start({required void Function() onStep}) async {
+    // 1. 永遠更新最新的回呼
     _onStep = onStep;
 
     if (_running) return true;
+
+    // 2. 每次啟動都重置
+    _baseSteps = -1;
+    _todaySteps = 0;
 
     try {
       if (defaultTargetPlatform == TargetPlatform.android) {
         final status = await Permission.activityRecognition.request();
         if (status.isDenied || status.isPermanentlyDenied) {
-          debugPrint('⚠️ 未授權活動辨識 (Android)');
+          debugPrint('⚠️ Android 未授權活動辨識');
           return false;
         }
       }
@@ -54,19 +59,20 @@ class PedometerService {
   }
 
   void _handleStepCount(StepCount event) {
-    // 1. 第一次收到系統步數時，記錄為基底（例如 77 或 2611）
+    // 🔥 第一次收到步數，記為基底，首頁顯示 0
     if (_baseSteps == -1) {
       _baseSteps = event.steps;
       return;
     }
 
-    // 2. 計算「從這次啟動後」走了幾步
+    // 🔥 計算從啟動到現在走了幾步
     final current = event.steps - _baseSteps;
 
-    // 3. 如果有新步數，就更新並觸發念佛
     if (current > _todaySteps) {
       final diff = current - _todaySteps;
       _todaySteps = current;
+
+      // 🔥 每一步都觸發回呼（首頁更新、念佛加次數）
       for (int i = 0; i < diff; i++) {
         _onStep?.call();
       }
@@ -77,8 +83,8 @@ class PedometerService {
     await _sub?.cancel();
     _sub = null;
     _running = false;
-    _baseSteps = -1; // 停止時重置基底
-    _todaySteps = 0; // 停止時歸零
+    _baseSteps = -1;
+    _todaySteps = 0;
     debugPrint('⏹ 計步器已停止');
   }
 }
