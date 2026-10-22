@@ -256,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 面板：定時念佛
+    // 面板：定時念佛
   Widget _buildTimerSettings() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -300,7 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               _buildSpeedBox('🏃', '快', '90/分', 2, isTimer: true),
               const SizedBox(width: 8),
-              // 🔥 第四個方塊：自訂速度（有鞋子圖示，高度與其他一致）
+              // 🔥 自訂速度方塊（有鞋子圖示，高度與其他一致）
               Expanded(
                 child: GestureDetector(
                   onTap: () => _showInputDialog('自訂速度 (每分鐘幾聲)', _timerSpeedCtrl, '聲/分', (val) {
@@ -364,19 +364,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-          const SizedBox(height: 16),
-          // 👇 定時念佛的預估視窗 👇
-          _buildEstimateBox(
-            chants: _selectedTimeMinutes() * _timerSpeedPerMinute,
-            minutes: _selectedTimeMinutes(),
-            mets: 1.3, // 念佛 METs
-          ),
-        ],
-      ),
-    );
-  }
 
-    // 面板：定速念佛
+  // 面板：定速念佛
   Widget _buildSpeedModeSettings() {
     return Container(
       padding: const EdgeInsets.all(16),
