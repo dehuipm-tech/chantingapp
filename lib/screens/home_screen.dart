@@ -800,41 +800,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onStart(BuildContext context) async {
-    final chant = context.read<ChantProvider>();
+  final chant = context.read<ChantProvider>();
 
-    switch (_selectedMode) {
-      case 0:
-        chant.setRhythm(RhythmMode.step);
-        break;
-      case 1:
-        chant.setRhythm(RhythmMode.timed);
-        chant.setBpm(_speedToInt(_currentSpeed));
-        chant.setTimedMode(_selectedMethodIndex == 1 ? TimedMode.soundStep : TimedMode.sound);
-        break;
-      case 2:
-        chant.setRhythm(RhythmMode.timer);
-        chant.setTimerMinutes(_selectedTimeMinutes());
-        chant.setBpm(_timerSpeedPerMinute);
-        break;
-      case 3:
-        chant.setRhythm(RhythmMode.bow);
-        chant.setBowCount(_selectedBowingCount());
-        chant.setBowMinutes(_selectedBowingMinutes());
-        break;
-    }
+  switch (_selectedMode) {
+    case 0:
+      chant.setRhythm(RhythmMode.step);
+      break;
+    case 1:
+      chant.setRhythm(RhythmMode.timed);
+      chant.setBpm(_speedToInt(_currentSpeed));
+      chant.setTimedMode(_selectedMethodIndex == 1 ? TimedMode.soundStep : TimedMode.sound);
+      break;
+    case 2:
+      chant.setRhythm(RhythmMode.timer);
+      chant.setTimerMinutes(_selectedTimeMinutes());
+      chant.setBpm(_timerSpeedPerMinute);
+      break;
+    case 3:
+      chant.setRhythm(RhythmMode.bow);
+      chant.setBowCount(_selectedBowingCount());
+      chant.setBowMinutes(_selectedBowingMinutes());
+      break;
+  }
 
-    await chant.start();
+  await chant.start();
 
-if (chant.needPedometer) {
-  await PedometerService.instance.start(onStep: () {
-    chant.onStep();
-    if (mounted) {
-      setState(() {
-        _todaySteps = PedometerService.instance.todaySteps;
-      });
-    }
-  });
+  // ⚡ 優化：只要是跟著步伐(case 0) 或 需要計步的定速模式，都強制啟動並同步更新畫面
+  if (_selectedMode == 0 || chant.needPedometer) {
+    await PedometerService.instance.start(onStep: () {
+      chant.onStep(); // 觸發播佛號與增加本次計數
+      if (mounted) {
+        setState(() {
+          _todaySteps = PedometerService.instance.todaySteps; // 即時更新畫面步數
+        });
+      }
+    });
+  }
 }
+
 
 
   int _speedToInt(String speed) => int.tryParse(speed.split('/').first) ?? 60;
