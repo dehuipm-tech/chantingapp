@@ -20,67 +20,54 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 0 = 跟著步伐, 1 = 定速念佛, 2 = 定時念佛, 3 = 拜佛
   int _selectedMode = 0;
-  int _todaySteps = 0; // 👈 新增這個變數來儲存即時步數
+  int _todaySteps = 0;
 
-  // 首頁大字卡生理數值
   String _todayBP = '--/--';
   String _todayHR = '--';
   String _todayCal = '0';
 
-  // ================= 定速念佛設定 =================
+  // 定速念佛
   String _currentSpeed = '60/分';
-  int _selectedSpeedIndex = 1;    
-  int _selectedMethodIndex = 1; 
+  int _selectedSpeedIndex = 1;
+  int _selectedMethodIndex = 1;
+  String _customSpeedValue = '';
+  final TextEditingController _speedCtrl = TextEditingController();
 
-  // 🔥 新增：自訂速度
-  String _customSpeedValue = ''; 
-  final TextEditingController _speedCtrl = TextEditingController();  
-
-  // ================= 定時念佛設定 =================
-  int _selectedTimeIndex = 0;     
-  String _customTimeValue = '';   
+  // 定時念佛
+  int _selectedTimeIndex = 0;
+  String _customTimeValue = '';
   final TextEditingController _timeCtrl = TextEditingController();
-  int _selectedTimerSpeedIndex = 1; 
+  int _selectedTimerSpeedIndex = 1;
   int _timerSpeedPerMinute = 60;
-
-  // 🔥 補上這兩個變數
-  String _customTimeSpeedValue = ''; 
+  String _customTimeSpeedValue = '';
   final TextEditingController _timerSpeedCtrl = TextEditingController();
 
-
-  // ================= 拜佛設定 =================
-  int _selectedBowingIndex = 0;   
-  String _customBowingValue = ''; 
+  // 拜佛
+  int _selectedBowingIndex = 0;
+  String _customBowingValue = '';
   final TextEditingController _bowingCtrl = TextEditingController();
-  
-  int _selectedBowingTimeIndex = 0; 
+  int _selectedBowingTimeIndex = 0;
   String _customBowingTimeValue = '';
   final TextEditingController _bowingTimeCtrl = TextEditingController();
 
-  // 🔥 唯一的 initState
   @override
   void initState() {
     super.initState();
     _loadTodayHealth();
-    
     PedometerService.instance.start(onStep: () {
       if (mounted) {
         setState(() {
-          _todaySteps = PedometerService.instance.todaySteps; 
+          _todaySteps = PedometerService.instance.todaySteps;
         });
       }
     });
   }
 
-  // 🔥 唯一的 _loadTodayHealth
   Future<void> _loadTodayHealth() async {
     final now = DateTime.now();
     final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    
     final record = await StorageService.instance.getHealthRecord(dateStr);
-    
     if (!mounted) return;
     setState(() {
       if (record != null) {
@@ -99,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _timeCtrl.dispose();
     _timerSpeedCtrl.dispose();
-    _speedCtrl.dispose(); // 👈 補上這行
+    _speedCtrl.dispose();
     _bowingCtrl.dispose();
     _bowingTimeCtrl.dispose();
     super.dispose();
@@ -108,16 +95,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final chant = context.watch<ChantProvider>();
-
     try {
       final tabProvider = context.watch<TabProvider>();
-      if (tabProvider.currentIndex == 0) { 
+      if (tabProvider.currentIndex == 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _loadTodayHealth());
       }
     } catch (_) {}
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // 🔥 確保背景透明 
+      backgroundColor: Colors.transparent,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -127,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         child: SafeArea(
-          bottom: false, // 🔥 確保漸層延伸到導覽列 
+          bottom: false,
           child: Column(
             children: [
               _buildAppBar(),
@@ -138,18 +124,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       _buildTopNavBar(),
                       const SizedBox(height: 20),
-                      
                       if (_selectedMode == 0) _buildStepModeHint(),
                       if (_selectedMode == 1) _buildSpeedModeSettings(),
                       if (_selectedMode == 2) _buildTimerSettings(),
                       if (_selectedMode == 3) _buildBowingSettings(),
-                      
                       const SizedBox(height: 24),
                       const CounterRing(),
                       const SizedBox(height: 24),
                       _buildControlButtons(context, chant),
                       const SizedBox(height: 24),
-                      
                       const SizedBox(height: 12),
                       _buildUploadCounter(context, chant),
                       const SizedBox(height: 12),
@@ -177,10 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Icon(Icons.grain, color: AppColors.accentLight, size: 24),
           SizedBox(width: 8),
-          Text(
-            '念佛計步',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.accentLight),
-          ),
+          Text('念佛計步', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.accentLight)),
         ],
       ),
     );
@@ -230,9 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
-
-  // 面板：跟著步伐
   Widget _buildStepModeHint() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -256,52 +233,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-    // 面板：定時念佛
-  Widget _buildTimerSettings() {
+  // 面板：定速念佛
+  Widget _buildSpeedModeSettings() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
       child: Column(
         children: [
-          _buildSectionTitle('設定時間 (分)'),
-          Row(
-            children: [
-              _buildOptionBox('30 分', 0, _selectedTimeIndex, (v) => setState(() => _selectedTimeIndex = v)),
-              const SizedBox(width: 8),
-              _buildOptionBox('60 分', 1, _selectedTimeIndex, (v) => setState(() => _selectedTimeIndex = v)),
-              const SizedBox(width: 8),
-              _buildOptionBox('90 分', 2, _selectedTimeIndex, (v) => setState(() => _selectedTimeIndex = v)),
-              const SizedBox(width: 8),
-              _buildCustomOptionBox(
-                _customTimeValue.isNotEmpty ? '$_customTimeValue 分' : '自訂',
-                3, 
-                _selectedTimeIndex, 
-                () => _showInputDialog('自訂時間', _timeCtrl, '分', (val) {
-                  setState(() {
-                    _selectedTimeIndex = 3;
-                    _customTimeValue = val;
-                  });
-                }, onCancel: () {
-                  setState(() {
-                    _customTimeValue = '';
-                    if (_selectedTimeIndex == 3) _selectedTimeIndex = -1;
-                  });
-                })
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
           _buildSectionTitle('速度'),
           Row(
             children: [
-              _buildSpeedBox('🐢', '慢', '30/分', 0, isTimer: true),
+              _buildSpeedBox('🐢', '慢', '30/分', 0),
               const SizedBox(width: 8),
-              _buildSpeedBox('🚶', '正常', '60/分', 1, isTimer: true),
+              _buildSpeedBox('🚶', '正常', '60/分', 1),
               const SizedBox(width: 8),
-              _buildSpeedBox('🏃', '快', '90/分', 2, isTimer: true),
+              _buildSpeedBox('🏃', '快', '90/分', 2),
               const SizedBox(width: 8),
-              
-              // 🔥 第四個方塊：自訂速度（有白色鞋子圖示，高度與其他一致）
               Expanded(
                 child: GestureDetector(
                   onTap: () => _showInputDialog('自訂速度 (每分鐘幾聲)', _speedCtrl, '聲/分', (val) {
@@ -330,11 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Column(
                       children: [
-                        // 🔥 這裡放白色鞋子
-                        const Text(
-                          '👣',
-                          style: TextStyle(fontSize: 24, color: Colors.white),
-                        ),
+                        const Text('👣', style: TextStyle(fontSize: 24, color: Colors.white)),
                         const SizedBox(height: 6),
                         Text(
                           '自訂',
@@ -344,7 +287,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: _selectedSpeedIndex == 3 ? const Color(0xFF6B4B8B) : Colors.white,
                           ),
                         ),
-                        // 🔥 下方文字永遠顯示數值，沒有數值就顯示「點擊設定」
                         Text(
                           _customSpeedValue.isNotEmpty ? '$_customSpeedValue/分' : '點擊設定',
                           style: TextStyle(
@@ -356,54 +298,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-              ),
-          const SizedBox(height: 16),
-          // 👇 定時念佛的預估視窗 👇
-          _buildEstimateBox(
-            chants: _selectedTimeMinutes() * _timerSpeedPerMinute,
-            minutes: _selectedTimeMinutes(),
-            mets: 1.3, // 念佛 METs
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 面板：定速念佛
-  Widget _buildSpeedModeSettings() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-      child: Column(
-        children: [
-          _buildSectionTitle('速度'),
-          Row(
-            children: [
-              _buildSpeedBox('🐢', '慢', '30/分', 0),
-              const SizedBox(width: 8),
-              _buildSpeedBox('🚶', '正常', '60/分', 1),
-              const SizedBox(width: 8),
-              _buildSpeedBox('🏃', '快', '90/分', 2),
-              const SizedBox(width: 8),
-              // 🔥 第四個方塊：自訂速度
-              _buildCustomOptionBox(
-                _customSpeedValue.isNotEmpty ? '$_customSpeedValue/分' : '自訂',
-                3, 
-                _selectedSpeedIndex, 
-                () => _showInputDialog('自訂速度 (每分鐘幾聲)', _speedCtrl, '聲/分', (val) {
-                  final bpm = int.tryParse(val) ?? 60;
-                  setState(() {
-                    _selectedSpeedIndex = 3;
-                    _customSpeedValue = val;
-                    _currentSpeed = '$bpm/分';
-                  });
-                }, onCancel: () {
-                  setState(() {
-                    _customSpeedValue = '';
-                    _currentSpeed = '60/分';
-                    if (_selectedSpeedIndex == 3) _selectedSpeedIndex = 1;
-                  });
-                })
               ),
             ],
           ),
@@ -423,7 +317,113 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 面板：拜佛
+  // 面板：定時念佛
+  Widget _buildTimerSettings() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        children: [
+          _buildSectionTitle('設定時間 (分)'),
+          Row(
+            children: [
+              _buildOptionBox('30 分', 0, _selectedTimeIndex, (v) => setState(() => _selectedTimeIndex = v)),
+              const SizedBox(width: 8),
+              _buildOptionBox('60 分', 1, _selectedTimeIndex, (v) => setState(() => _selectedTimeIndex = v)),
+              const SizedBox(width: 8),
+              _buildOptionBox('90 分', 2, _selectedTimeIndex, (v) => setState(() => _selectedTimeIndex = v)),
+              const SizedBox(width: 8),
+              _buildCustomOptionBox(
+                _customTimeValue.isNotEmpty ? '$_customTimeValue 分' : '自訂',
+                3,
+                _selectedTimeIndex,
+                () => _showInputDialog('自訂時間', _timeCtrl, '分', (val) {
+                  setState(() {
+                    _selectedTimeIndex = 3;
+                    _customTimeValue = val;
+                  });
+                }, onCancel: () {
+                  setState(() {
+                    _customTimeValue = '';
+                    if (_selectedTimeIndex == 3) _selectedTimeIndex = -1;
+                  });
+                }),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildSectionTitle('速度'),
+          Row(
+            children: [
+              _buildSpeedBox('🐢', '慢', '30/分', 0, isTimer: true),
+              const SizedBox(width: 8),
+              _buildSpeedBox('🚶', '正常', '60/分', 1, isTimer: true),
+              const SizedBox(width: 8),
+              _buildSpeedBox('🏃', '快', '90/分', 2, isTimer: true),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _showInputDialog('自訂速度 (每分鐘幾聲)', _timerSpeedCtrl, '聲/分', (val) {
+                    final bpm = int.tryParse(val) ?? 60;
+                    setState(() {
+                      _selectedTimerSpeedIndex = 3;
+                      _customTimeSpeedValue = val;
+                      _timerSpeedPerMinute = bpm;
+                    });
+                  }, onCancel: () {
+                    setState(() {
+                      _customTimeSpeedValue = '';
+                      _timerSpeedPerMinute = 60;
+                      if (_selectedTimerSpeedIndex == 3) _selectedTimerSpeedIndex = 1;
+                    });
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedTimerSpeedIndex == 3 ? const Color(0xFFF3E8FF) : const Color(0xFF6B4B8B),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF9F7AEA) : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text('👣', style: TextStyle(fontSize: 24, color: Colors.white)),
+                        const SizedBox(height: 6),
+                        Text(
+                          '自訂',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF6B4B8B) : Colors.white,
+                          ),
+                        ),
+                        Text(
+                          _customTimeSpeedValue.isNotEmpty ? '$_customTimeSpeedValue/分' : '點擊設定',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF805AD5) : Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildEstimateBox(
+            chants: _selectedTimeMinutes() * _timerSpeedPerMinute,
+            minutes: _selectedTimeMinutes(),
+            mets: 1.3,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBowingSettings() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -441,8 +441,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               _buildCustomOptionBox(
                 _customBowingValue.isNotEmpty ? '$_customBowingValue 拜' : '自訂',
-                3, 
-                _selectedBowingIndex, 
+                3,
+                _selectedBowingIndex,
                 () => _showInputDialog('自訂次數', _bowingCtrl, '拜', (val) {
                   setState(() {
                     _selectedBowingIndex = 3;
@@ -453,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _customBowingValue = '';
                     if (_selectedBowingIndex == 3) _selectedBowingIndex = -1;
                   });
-                })
+                }),
               ),
             ],
           ),
@@ -469,8 +469,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               _buildCustomOptionBox(
                 _customBowingTimeValue.isNotEmpty ? '$_customBowingTimeValue 分' : '自訂',
-                3, 
-                _selectedBowingTimeIndex, 
+                3,
+                _selectedBowingTimeIndex,
                 () => _showInputDialog('自訂時間', _bowingTimeCtrl, '分', (val) {
                   setState(() {
                     _selectedBowingTimeIndex = 3;
@@ -481,34 +481,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     _customBowingTimeValue = '';
                     if (_selectedBowingTimeIndex == 3) _selectedBowingTimeIndex = -1;
                   });
-                })
+                }),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          // 👇 拜佛的預估視窗 👇
           _buildEstimateBox(
-            chants: _selectedBowingCount(), 
+            chants: _selectedBowingCount(),
             minutes: _selectedBowingMinutes(),
-            mets: 3.0, // 拜佛 METs
+            mets: 3.0,
           ),
         ],
       ),
     );
   }
 
-  // --- 新增：預估結果視窗 ---
   Widget _buildEstimateBox({required int chants, required int minutes, required double mets}) {
-    if (minutes <= 0) return const SizedBox.shrink(); 
-
+    if (minutes <= 0) return const SizedBox.shrink();
     final hours = minutes / 60.0;
-    final calories = (mets * 60 * hours).toStringAsFixed(1); // 預設體重 60kg
-
+    final calories = (mets * 60 * hours).toStringAsFixed(1);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3E8FF), 
+        color: const Color(0xFFF3E8FF),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF9F7AEA), width: 1.5),
       ),
@@ -535,25 +531,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
-    // --- 新增：定速念佛預估視窗 (以 30 分鐘為基準) ---
   Widget _buildSpeedEstimateBox() {
-    // 假設使用者在「只有聲音」模式下，我們用 30 分鐘來算
-    // 假設使用者在「聲音+步數」模式下，我們用每分鐘大約 100 步來算 (30分鐘約 3000 步)
-    
     final isStepMode = _selectedMethodIndex == 1;
     final bpm = _speedToInt(_currentSpeed);
-    
-    // 預估 30 分鐘的結果
     final estChants = bpm * 30;
-    final estSteps = isStepMode ? 3000 : 0; // 如果你有計步器，大約抓個平均值
-    final calories = (1.3 * 60 * 0.5).toStringAsFixed(1); // 預設 30 分鐘消耗
+    final estSteps = isStepMode ? 3000 : 0;
+    final calories = (1.3 * 60 * 0.5).toStringAsFixed(1);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3E8FF), 
+        color: const Color(0xFFF3E8FF),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF9F7AEA), width: 1.5),
       ),
@@ -596,7 +585,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- 輔助小標題 ---
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -604,12 +592,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- 速度方塊 ---
   Widget _buildSpeedBox(String emoji, String title, String subtitle, int index, {bool isTimer = false}) {
-    bool isSelected = isTimer 
-        ? _selectedTimerSpeedIndex == index 
-        : _selectedSpeedIndex == index;
-
+    bool isSelected = isTimer ? _selectedTimerSpeedIndex == index : _selectedSpeedIndex == index;
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -643,7 +627,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- 念佛方式方塊 ---
   Widget _buildMethodBox(String emoji, String title, String subtitle, int index) {
     bool isSelected = _selectedMethodIndex == index;
     return Expanded(
@@ -679,7 +662,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- 選項方塊 ---
   Widget _buildOptionBox(String text, int index, int currentIndex, Function(int) onTap) {
     bool isSelected = currentIndex == index;
     return Expanded(
@@ -703,7 +685,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- 自訂方塊 ---
   Widget _buildCustomOptionBox(String text, int index, int currentIndex, VoidCallback onTap) {
     bool isSelected = currentIndex == index;
     return Expanded(
@@ -727,10 +708,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 彈出輸入框
   void _showInputDialog(String title, TextEditingController ctrl, String suffix, Function(String) onConfirm, {VoidCallback? onCancel}) {
-    ctrl.clear(); 
-    
+    ctrl.clear();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -747,8 +726,8 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.pop(ctx);
               if (onCancel != null) onCancel();
-            }, 
-            child: const Text('取消', style: TextStyle(color: Colors.grey))
+            },
+            child: const Text('取消', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -758,7 +737,7 @@ class _HomeScreenState extends State<HomeScreen> {
               } else {
                 if (onCancel != null) onCancel();
               }
-            }, 
+            },
             child: const Text('確定'),
           ),
         ],
@@ -766,7 +745,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ================= 下方按鈕與連動 =================
   Widget _buildControlButtons(BuildContext context, ChantProvider chant) {
     if (chant.isIdle) {
       return SizedBox(
@@ -789,80 +767,56 @@ class _HomeScreenState extends State<HomeScreen> {
       width: 330,
       child: Row(
         children: [
-                        // 🔥 自訂速度方塊（白色鞋子，高度與其他一致）
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _showInputDialog('自訂速度 (每分鐘幾聲)', _timerSpeedCtrl, '聲/分', (val) {
-                    final bpm = int.tryParse(val) ?? 60;
-                    setState(() {
-                      _selectedTimerSpeedIndex = 3;
-                      _customTimeSpeedValue = val;
-                      _timerSpeedPerMinute = bpm;
-                    });
-                  }, onCancel: () {
-                    setState(() {
-                      _customTimeSpeedValue = '';
-                      _timerSpeedPerMinute = 60;
-                      if (_selectedTimerSpeedIndex == 3) _selectedTimerSpeedIndex = 1;
-                    });
-                  }),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _selectedTimerSpeedIndex == 3 ? const Color(0xFFF3E8FF) : const Color(0xFF6B4B8B),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF9F7AEA) : Colors.transparent,
-                        width: 2,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        // 🔥 白色鞋子
-                        const Text(
-                          '👣',
-                          style: TextStyle(fontSize: 24, color: Colors.white),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '自訂',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF6B4B8B) : Colors.white,
-                          ),
-                        ),
-                        Text(
-                          _customTimeSpeedValue.isNotEmpty ? '$_customTimeSpeedValue/分' : '點擊設定',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: _selectedTimerSpeedIndex == 3 ? const Color(0xFF805AD5) : Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: chant.isRunning ? () => _onPause(context) : () => _onResume(context),
+              icon: Icon(chant.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 20),
+              label: Text(chant.isRunning ? '暫停' : '繼續', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: chant.isRunning ? AppColors.orange : AppColors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _onFinish(context),
+              icon: const Icon(Icons.stop_rounded, size: 20),
+              label: const Text('結束', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _onStart(BuildContext context) async {
     final chant = context.read<ChantProvider>();
 
     switch (_selectedMode) {
-      case 0: // 跟著步伐
+      case 0:
         chant.setRhythm(RhythmMode.step);
         break;
-      case 1: // 定速念佛
+      case 1:
         chant.setRhythm(RhythmMode.timed);
         chant.setBpm(_speedToInt(_currentSpeed));
         chant.setTimedMode(_selectedMethodIndex == 1 ? TimedMode.soundStep : TimedMode.sound);
         break;
-      case 2: // 定時念佛
+      case 2:
         chant.setRhythm(RhythmMode.timer);
         chant.setTimerMinutes(_selectedTimeMinutes());
         chant.setBpm(_timerSpeedPerMinute);
         break;
-      case 3: // 拜佛
+      case 3:
         chant.setRhythm(RhythmMode.bow);
         chant.setBowCount(_selectedBowingCount());
         chant.setBowMinutes(_selectedBowingMinutes());
@@ -922,8 +876,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-   
-
   Future<void> _onFinish(BuildContext context) async {
     final chant = context.read<ChantProvider>();
     final queue = context.read<QueueProvider>();
@@ -932,21 +884,13 @@ class _HomeScreenState extends State<HomeScreen> {
       final now = DateTime.now();
       final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-      
-      // 1. 保持原有機制：建立雲端佇列紀錄
-      final record = ChantRecord(
-        date: dateStr,
-        chantingCount: chant.chantCount,
-        steps: chant.stepCount,
-      );
+
+      final record = ChantRecord(date: dateStr, chantingCount: chant.chantCount, steps: chant.stepCount);
       await queue.addRecord(record);
 
-      // ============================================================
-      // 💡 2. 核心大優化：根據「四種選中模式」動態決定本機品項與備註說明
-      // ============================================================
-      String localItemName = '佛號'; // 預設品項
-      String localRemark = '';      // 預設備註
-      String snackBarLabel = '念佛'; // 預設彈窗提示詞
+      String localItemName = '佛號';
+      String localRemark = '';
+      String snackBarLabel = '念佛';
 
       switch (_selectedMode) {
         case 0:
@@ -961,21 +905,19 @@ class _HomeScreenState extends State<HomeScreen> {
           break;
         case 2:
           localItemName = '佛號';
-          int mins = _selectedTimeIndex == 0 ? 30 : (_selectedTimeIndex == 1 ? 60 : (_selectedTimeIndex == 2 ? 90 : int.tryParse(_customTimeValue) ?? 30));
+          final mins = _selectedTimeMinutes();
           localRemark = '⏱️ 定時念佛 ($mins分鐘 / 速度: $_timerSpeedPerMinute/分)';
           snackBarLabel = '定時念佛';
           break;
         case 3:
-          // 🙇 關鍵：當模式是 3 時，品項名稱改成「拜佛」，備註寫上預計花費時間
-          localItemName = '拜佛'; 
-          int bows = _selectedBowingIndex == 0 ? 108 : (_selectedBowingIndex == 1 ? 200 : (_selectedBowingIndex == 2 ? 300 : int.tryParse(_customBowingValue) ?? 108));
-          int bowMins = _selectedBowingTimeIndex == 0 ? 20 : (_selectedBowingTimeIndex == 1 ? 30 : (_selectedBowingTimeIndex == 2 ? 60 : int.tryParse(_customBowingTimeValue) ?? 30));
+          localItemName = '拜佛';
+          final bows = _selectedBowingCount();
+          final bowMins = _selectedBowingMinutes();
           localRemark = '🙇 拜佛功能 (目標: $bows拜 / 預計: $bowMins分鐘)';
           snackBarLabel = '拜佛修行';
           break;
       }
 
-      // ── A. 將功課（佛號或拜佛）存入本機日誌 ──
       if (chant.chantCount > 0) {
         final chantLog = DailyLog(
           id: '${_selectedMode == 3 ? "bow" : "chant"}_${now.millisecondsSinceEpoch}',
@@ -983,22 +925,21 @@ class _HomeScreenState extends State<HomeScreen> {
           time: timeStr,
           type: _selectedMode == 3 ? 'bow' : 'chant',
           item: localItemName,
-          icon: _selectedMode == 3 ? '💎' : '📿', // 🔥 補上這行！拜佛給 💎，念佛給 📿
+          icon: _selectedMode == 3 ? '💎' : '📿',
           count: chant.chantCount,
           remark: localRemark,
         );
         await StorageService.instance.updateDailyLog(dateStr, chantLog);
       }
 
-      // ── B. 將走路步數同步存入本機日誌（只有在有踩出步伐時才存） ──
       if (chant.stepCount > 0) {
-         final stepLog = DailyLog(
+        final stepLog = DailyLog(
           id: 'step_${now.millisecondsSinceEpoch}',
           date: dateStr,
           time: timeStr,
           type: 'step',
           item: '步數',
-          icon: '👣', // 🔥 補上這行！步數給 👣
+          icon: '👣',
           count: chant.stepCount,
           remark: '👣 念佛計步同步',
         );
@@ -1006,8 +947,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       if (!context.mounted) return;
-      
-      // 彈出極具質感的綠色成功通知
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -1022,31 +961,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await chant.finish();
     await PedometerService.instance.stop();
-  // ============================================================
-    // 🔥 核心修正：念佛結束後，清空自訂時間與自訂次數，恢復預設狀態
-    // ============================================================
+
     if (mounted) {
       setState(() {
-        // 1. 重置定時念佛的自訂時間
-        _selectedTimeIndex = 0; // 預設回到 30 分
-        _customTimeValue = '';  // 清空自訂數字
-        _timeCtrl.clear();      // 清空輸入框
-
-        // 2. 重置拜佛的自訂次數與時間
-        _selectedBowingIndex = 0; // 預設回到 108 拜
+        _selectedTimeIndex = 0;
+        _customTimeValue = '';
+        _timeCtrl.clear();
+        _selectedBowingIndex = 0;
         _customBowingValue = '';
         _bowingCtrl.clear();
-
-        _selectedBowingTimeIndex = 0; // 預設回到 20 分
+        _selectedBowingTimeIndex = 0;
         _customBowingTimeValue = '';
         _bowingTimeCtrl.clear();
       });
     }
   }
-    
 
-
-  // 下方深色卡片
   Widget _buildSyncBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1067,8 +997,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildUploadCounter(BuildContext context, ChantProvider chant) {
     final queue = context.watch<QueueProvider>();
-    final pendingCount = queue.totalPendingChant + chant.chantCount; 
-
+    final pendingCount = queue.totalPendingChant + chant.chantCount;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
       decoration: BoxDecoration(
@@ -1102,14 +1031,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
- Widget _buildGoUploadButton(BuildContext context, ChantProvider chant) {
+  Widget _buildGoUploadButton(BuildContext context, ChantProvider chant) {
     final queue = context.watch<QueueProvider>();
     final hasData = queue.totalPendingChant > 0 || queue.totalPendingSteps > 0;
-
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        // 🔥 點擊後跳到「日曆分頁」(Index 1)
         onPressed: hasData ? () => context.read<TabProvider>().setIndex(1) : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: hasData ? AppColors.accent : Colors.grey.shade600,
@@ -1125,24 +1052,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  
-  // 💡 修正後的身心統計字卡區：直接顯示最新手動上傳的生理數值
   Widget _buildStatsGrid(ChantProvider chant) {
     return Column(
       children: [
         Row(
           children: [
-            // 👇 把這裡的 chant.stepCount 改成 _todaySteps
             _buildStatBox('👣 今日步數', '$_todaySteps', '步'),
             const SizedBox(width: 10),
-            _buildStatBox('❤️ 平均心跳', _todayHR, 'bpm'), // 🟢 連動顯示
+            _buildStatBox('❤️ 平均心跳', _todayHR, 'bpm'),
           ],
         ),
         const SizedBox(height: 10),
         Row(
           children: [
-            _buildStatBox('🩺 血壓', _todayBP, 'mmHg'),   // 🟢 連動顯示
-            _buildStatBox('🔥 消耗熱量', _todayCal, 'kcal'), // 🟢 步數換算+累積顯示
+            _buildStatBox('🩺 血壓', _todayBP, 'mmHg'),
+            _buildStatBox('🔥 消耗熱量', _todayCal, 'kcal'),
           ],
         ),
       ],
