@@ -335,7 +335,60 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  
+    // 面板：定速念佛
+  Widget _buildSpeedModeSettings() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        children: [
+          _buildSectionTitle('速度'),
+          Row(
+            children: [
+              _buildSpeedBox('🐢', '慢', '30/分', 0),
+              const SizedBox(width: 8),
+              _buildSpeedBox('🚶', '正常', '60/分', 1),
+              const SizedBox(width: 8),
+              _buildSpeedBox('🏃', '快', '90/分', 2),
+              const SizedBox(width: 8),
+              // 🔥 第四個方塊：自訂速度
+              _buildCustomOptionBox(
+                _customSpeedValue.isNotEmpty ? '$_customSpeedValue/分' : '自訂',
+                3, 
+                _selectedSpeedIndex, 
+                () => _showInputDialog('自訂速度 (每分鐘幾聲)', _speedCtrl, '聲/分', (val) {
+                  final bpm = int.tryParse(val) ?? 60;
+                  setState(() {
+                    _selectedSpeedIndex = 3;
+                    _customSpeedValue = val;
+                    _currentSpeed = '$bpm/分';
+                  });
+                }, onCancel: () {
+                  setState(() {
+                    _customSpeedValue = '';
+                    _currentSpeed = '60/分';
+                    if (_selectedSpeedIndex == 3) _selectedSpeedIndex = 1;
+                  });
+                })
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildSectionTitle('念佛方式'),
+          Row(
+            children: [
+              _buildMethodBox('🔈', '只有聲音', '不計步', 0),
+              const SizedBox(width: 12),
+              _buildMethodBox('🔈👣', '聲音+步數', '邊走邊念', 1),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildSpeedEstimateBox(),
+        ],
+      ),
+    );
+  }
+
   // 面板：拜佛
   Widget _buildBowingSettings() {
     return Container(
