@@ -46,13 +46,11 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
     });
   }
 
-  // 🔥 測試用：直接打 API 並印出 Log
-  Future<void> _loadData() async {
+    Future<void> _loadData() async {
     final auth = context.read<AuthProvider>();
     if (!auth.loggedIn) return;
     
     String groupCode = auth.state.groupCode.isNotEmpty ? auth.state.groupCode : '01';
-
     setState(() => _isLoading = true);
     
     try {
@@ -60,13 +58,13 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
       final year = _focusedDay.year;
       final month = _focusedDay.month;
       
+      // 🔥 用 index.php，並帶上 group
       final url = Uri.parse('${ApiService.baseUrl}index.php?action=getMemberChantingDailyHistory&memberNo=$memberNo&year=$year&month=$month&group=$groupCode');
-      print('🚀 [直接測試] 網址: $url');
+      print('🚀 [App] 抓取日曆: $url');
       
       final response = await http.get(url).timeout(const Duration(seconds: 30));
-      
-      print('📥 [直接測試] 回應碼: ${response.statusCode}');
-      print('📥 [直接測試] 回應內容前100字: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}');
+      print('📥 [App] 回應碼: ${response.statusCode}');
+      print('📥 [App] 回應內容: ${response.body}');
       
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
@@ -76,7 +74,6 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
         });
       } else {
         setState(() => _isLoading = false);
-        print('❌ 狀態碼錯誤: ${response.statusCode}');
       }
     } catch (e) {
       setState(() => _isLoading = false);
@@ -84,25 +81,24 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
     }
   }
 
-  // 🔥 測試用：直接打 API 並印出 Log
   Future<void> _loadYearStats() async {
     final auth = context.read<AuthProvider>();
     if (!auth.loggedIn) return;
     
     String groupCode = auth.state.groupCode.isNotEmpty ? auth.state.groupCode : '01';
-
     setState(() => _isYearLoading = true);
     
     try {
       final memberNo = auth.state.memberNo;
       final year = _selectedYear;
       
+      // 🔥 用 index.php，並帶上 group
       final url = Uri.parse('${ApiService.baseUrl}index.php?action=getMemberChantingHistory&memberNo=$memberNo&year=$year&group=$groupCode');
-      print('🚀 [直接測試] 年度網址: $url');
+      print('🚀 [App] 抓取年度: $url');
       
       final response = await http.get(url).timeout(const Duration(seconds: 30));
-      
-      print('📥 [直接測試] 年度回應碼: ${response.statusCode}');
+      print('📥 [App] 年度回應碼: ${response.statusCode}');
+      print('📥 [App] 年度回應內容: ${response.body}');
       
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
