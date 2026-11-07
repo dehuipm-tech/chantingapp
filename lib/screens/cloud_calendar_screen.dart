@@ -60,7 +60,7 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
       final year = _focusedDay.year;
       final month = _focusedDay.month;
       
-      final url = Uri.parse('https://tw-proxy-ei.dhp.com.tw/index.php?action=getMemberChantingDailyHistory&memberNo=$memberNo&year=$year&month=$month&group=$groupCode');
+      final url = Uri.parse('${ApiService.baseUrl}index.php?action=getMemberChantingDailyHistory&memberNo=$memberNo&year=$year&month=$month&group=$groupCode');
       print('🚀 [直接測試] 網址: $url');
       
       final response = await http.get(url).timeout(const Duration(seconds: 30));
@@ -97,7 +97,7 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
       final memberNo = auth.state.memberNo;
       final year = _selectedYear;
       
-      final url = Uri.parse('https://tw-proxy-ei.dhp.com.tw/index.php?action=getMemberChantingHistory&memberNo=$memberNo&year=$year&group=$groupCode');
+      final url = Uri.parse('${ApiService.baseUrl}index.php?action=getMemberChantingHistory&memberNo=$memberNo&year=$year&group=$groupCode');
       print('🚀 [直接測試] 年度網址: $url');
       
       final response = await http.get(url).timeout(const Duration(seconds: 30));
