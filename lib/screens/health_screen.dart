@@ -21,6 +21,7 @@ class _HealthScreenState extends State<HealthScreen> {
   final _hrCtrl = TextEditingController();
   final _bpCtrl = TextEditingController();
   final _calCtrl = TextEditingController();
+  final _remarkCtrl = TextEditingController(); // 🔥 新增備註 Controller
   DateTime _selectedDate = DateTime.now();
   
   Map<String, HealthRecord> _records = {};
@@ -47,10 +48,12 @@ class _HealthScreenState extends State<HealthScreen> {
         _hrCtrl.text = record.heartRate > 0 ? record.heartRate.toString() : '';
         _bpCtrl.text = record.bpSys > 0 ? '${record.bpSys}/${record.bpDia}' : '';
         _calCtrl.text = record.calories > 0 ? record.calories.toString() : '';
+        _remarkCtrl.text = record.remark; // 🔥 載入備註
       } else {
         _hrCtrl.clear();
         _bpCtrl.clear();
         _calCtrl.clear();
+        _remarkCtrl.clear(); // 🔥 清空備註
       }
     });
   }
@@ -79,6 +82,7 @@ class _HealthScreenState extends State<HealthScreen> {
       bpSys: sys,
       bpDia: dia,
       calories: cal,
+      remark: _remarkCtrl.text.trim(), // 🔥 儲存備註
     );
 
     await StorageService.instance.saveHealthRecord(record);
@@ -89,6 +93,7 @@ class _HealthScreenState extends State<HealthScreen> {
       _hrCtrl.clear();
       _bpCtrl.clear();
       _calCtrl.clear();
+      _remarkCtrl.clear();
     }
   }
 
@@ -196,6 +201,14 @@ class _HealthScreenState extends State<HealthScreen> {
                       onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                       decoration: const InputDecoration(labelText: '🔥 消耗熱量 (kcal)', hintText: '例：480')
                     ),
+                    const SizedBox(height: 12),
+                    // 🔥 新增備註輸入框
+                    TextField(
+                      controller: _remarkCtrl,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                      decoration: const InputDecoration(labelText: '📝 備註 (選填)', hintText: '例：今天血壓偏高')
+                    ),
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
@@ -260,7 +273,7 @@ class _HealthScreenState extends State<HealthScreen> {
                     ),
 
                     const SizedBox(height: 8),
-                    const Text('💡 備份包含：心跳、血壓、熱量\n💡 換手機時，用這個備份檔帶走', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+                    const Text('💡 備份包含：心跳、血壓、熱量、備註\n💡 換手機時，用這個備份檔帶走', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
                   ],
                 ),
               ),
@@ -274,7 +287,8 @@ class _HealthScreenState extends State<HealthScreen> {
               if (_records.isEmpty)
                 const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('目前無健康紀錄', style: TextStyle(color: Colors.grey))))
               else
-                ..._records.entries.map((entry) {
+                // 🔥 核心修改：日期由新到舊排序，並顯示備註
+                ...(_records.entries.toList()..sort((a, b) => b.key.compareTo(a.key))).map((entry) {
                   final date = entry.key;
                   final r = entry.value;
                   return Container(
@@ -294,6 +308,11 @@ class _HealthScreenState extends State<HealthScreen> {
                               Text('📅 $date', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark)),
                               const SizedBox(height: 4),
                               Text('❤️ ${r.heartRate} bpm · 🩺 ${r.bpText} · 🔥 ${r.calories} kcal', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+                              // 🔥 顯示備註 (如果有填寫的話)
+                              if (r.remark.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text('📝 ${r.remark}', style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w500)),
+                              ],
                             ],
                           ),
                         ),
@@ -314,7 +333,7 @@ class _HealthScreenState extends State<HealthScreen> {
     );
   }
 
-    Future<void> _exportBackup() async {
+  Future<void> _exportBackup() async {
     if (_records.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ 沒有健康資料可備份')));
       return;
@@ -333,21 +352,17 @@ class _HealthScreenState extends State<HealthScreen> {
       final file = File('${directory.path}/health_backup.json');
       await file.writeAsString(jsonString);
 
-      // 🟢 獲取當前螢幕尺寸，用來計算 iOS 分享彈窗的合理起點，防止系統強制崩潰
-      final size = MediaQuery.of(context).size;
-
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'application/json')],
         subject: '健康紀錄備份',
         text: '您的健康紀錄備份檔（換手機用）',
-        // 🟢 核心修復：指定一個非零（non-zero）的坐標空間，完美相容 iOS/iPadOS 呼叫架構
-        sharePositionOrigin: Rect.fromLTWH(0, 0, size.width, size.height / 2),
+        // 🟢 核心修復：指定一個非零（non-zero）的坐標空間，完美相容 iOS/iPadOS 呼叫架構，解決閃退！
+        sharePositionOrigin: const Rect.fromLTWH(0, 0, 1, 1),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ 備份失敗: $e')));
     }
   }
-
 
   Future<void> _importBackup() async {
     try {
