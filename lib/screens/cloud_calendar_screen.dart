@@ -668,6 +668,8 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
         [XFile(path, mimeType: 'text/csv')],
         text: '這是 $_selectedYear 年的功課統計表 (CSV)',
         subject: '念佛統計表',
+        // 🔥 核心修復：指定一個非零的座標空間，解決 iOS 閃退問題
+        sharePositionOrigin: const Rect.fromLTWH(0, 0, 1, 1),
       );
     } catch (e) {
       if (!mounted) return;
@@ -733,9 +735,11 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
         ),
       );
 
-      await Printing.layoutPdf(
+    await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => pdf.save(),
         name: '念佛統計_$_selectedYear.pdf',
+        // 🔥 加上這行防呆，避免某些 iOS 版本閃退
+        sharePositionOrigin: const Rect.fromLTWH(0, 0, 1, 1), 
       );
     } catch (e) {
       if (!mounted) return;
@@ -801,7 +805,6 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
                 newRemark,
                 itemName: itemName,
                 icon: icon,
-                groupCode: context.read<AuthProvider>().state.groupCode, // 👈 加上這行
               );
 
               if (mounted) {
