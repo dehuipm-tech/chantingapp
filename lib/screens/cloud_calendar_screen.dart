@@ -124,16 +124,14 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
     final itemRecs = _yearRecords[itemName];
     if (itemRecs == null) return 0;
 
-    // 🔥 狀況一：資料是 Map (例如 {"1": 100, "01": 200, "1月": 300})
+    // 🔥 狀況一：資料是 Map (例如 {"10": 100, "10月": 200})
     if (itemRecs is Map) {
-      // 嘗試各種可能的 key 格式
       final possibleKeys = [
-        '$month',                          // 1
-        month.toString().padLeft(2, '0'),  // 01
-        '${month}月',                       // 1月
-        '${month.toString().padLeft(2, '0')}月', // 01月
+        '$month',
+        month.toString().padLeft(2, '0'),
+        '${month}月',
+        '${month.toString().padLeft(2, '0')}月',
       ];
-      
       for (var key in possibleKeys) {
         if (itemRecs.containsKey(key)) {
           final v = itemRecs[key];
@@ -143,17 +141,20 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
       return 0;
     }
 
-    // 🔥 狀況二：資料是 List (例如 [{"month": 1, "count": 100}, ...])
+    // 🔥 狀況二：資料是 List (例如 [{"MONTH": 10, "COUNT": 42}, ...])
     if (itemRecs is List) {
+      int total = 0;
       for (final rec in itemRecs) {
         if (rec is Map) {
-          final recMonth = (rec['month'] as num?)?.toInt();
-          if (recMonth == month) {
-            final v = rec['count'] ?? rec['amount'] ?? rec['value'] ?? 0;
-            return (v is num) ? v.toInt() : 0;
+          // 🔥 同時嘗試各種大小寫的欄位名稱
+          final recMonth = (rec['month'] ?? rec['MONTH'] ?? rec['Month'] ?? rec['m']) as num?;
+          if (recMonth?.toInt() == month) {
+            final v = rec['count'] ?? rec['COUNT'] ?? rec['Count'] ?? rec['amount'] ?? rec['AMOUNT'] ?? rec['value'] ?? 0;
+            total += (v is num) ? v.toInt() : 0;
           }
         }
       }
+      return total;
     }
 
     return 0;
