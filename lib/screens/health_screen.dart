@@ -314,7 +314,7 @@ class _HealthScreenState extends State<HealthScreen> {
     );
   }
 
-  Future<void> _exportBackup() async {
+    Future<void> _exportBackup() async {
     if (_records.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ 沒有健康資料可備份')));
       return;
@@ -333,15 +333,21 @@ class _HealthScreenState extends State<HealthScreen> {
       final file = File('${directory.path}/health_backup.json');
       await file.writeAsString(jsonString);
 
+      // 🟢 獲取當前螢幕尺寸，用來計算 iOS 分享彈窗的合理起點，防止系統強制崩潰
+      final size = MediaQuery.of(context).size;
+
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'application/json')],
         subject: '健康紀錄備份',
         text: '您的健康紀錄備份檔（換手機用）',
+        // 🟢 核心修復：指定一個非零（non-zero）的坐標空間，完美相容 iOS/iPadOS 呼叫架構
+        sharePositionOrigin: Rect.fromLTWH(0, 0, size.width, size.height / 2),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('❌ 備份失敗: $e')));
     }
   }
+
 
   Future<void> _importBackup() async {
     try {
