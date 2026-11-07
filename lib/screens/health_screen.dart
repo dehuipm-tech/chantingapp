@@ -609,3 +609,4 @@ class HealthTrajectoryChart extends StatelessWidget {
     ];
   }
 }
+
