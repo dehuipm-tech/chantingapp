@@ -46,7 +46,7 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
     });
   }
 
-    Future<void> _loadData() async {
+      Future<void> _loadData() async {
     final auth = context.read<AuthProvider>();
     if (!auth.loggedIn) return;
     
@@ -58,8 +58,8 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
       final year = _focusedDay.year;
       final month = _focusedDay.month;
       
-      // 🔥 用 index.php，並帶上 group
-      final url = Uri.parse('${ApiService.baseUrl}index.php?action=getMemberChantingDailyHistory&memberNo=$memberNo&year=$year&month=$month&group=$groupCode');
+      // 🔥 直接打 get_history.php
+      final url = Uri.parse('${ApiService.baseUrl}get_history.php?action=getMemberChantingDailyHistory&memberNo=$memberNo&year=$year&month=$month&group=$groupCode');
       print('🚀 [App] 抓取日曆: $url');
       
       final response = await http.get(url).timeout(const Duration(seconds: 30));
@@ -92,8 +92,8 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
       final memberNo = auth.state.memberNo;
       final year = _selectedYear;
       
-      // 🔥 用 index.php，並帶上 group
-      final url = Uri.parse('${ApiService.baseUrl}index.php?action=getMemberChantingHistory&memberNo=$memberNo&year=$year&group=$groupCode');
+      // 🔥 直接打 get_year_stats.php
+      final url = Uri.parse('${ApiService.baseUrl}get_year_stats.php?action=getMemberChantingHistory&memberNo=$memberNo&year=$year&group=$groupCode');
       print('🚀 [App] 抓取年度: $url');
       
       final response = await http.get(url).timeout(const Duration(seconds: 30));
