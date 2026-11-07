@@ -803,7 +803,7 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
                 newRemark,
                 itemName: itemName,
                 icon: icon,
-                groupCode: auth.state.groupCode, // 👈 加上這行
+                groupCode: context.read<AuthProvider>().state.groupCode, // 👈 改這裡
               );
 
               if (mounted) {
