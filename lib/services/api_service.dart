@@ -199,10 +199,11 @@ class ApiService {
     }
   }
 
-  /// 每日紀錄
+    /// 每日紀錄
   Future<Map<String, dynamic>?> fetchDailyHistory(String memberNo, int year, int month, String groupCode) async {
     try {
-      final url = Uri.parse('$baseUrl/index.php?action=getMemberChantingDailyHistory&memberNo=$memberNo&year=$year&month=$month&group=$groupCode');
+      // 🔥 改打 get_history.php，並且把 group 參數帶上
+      final url = Uri.parse('${baseUrl}get_history.php?action=getMemberChantingDailyHistory&memberNo=$memberNo&year=$year&month=$month&group=$groupCode');
       debugPrint('🚀 [http] 準備抓日曆: $url');
 
       final response = await http.get(url).timeout(const Duration(seconds: 60));
@@ -221,7 +222,8 @@ class ApiService {
   /// 年度統計
   Future<Map<String, dynamic>?> fetchYearStats(String memberNo, int year, String groupCode) async {
     try {
-      final url = Uri.parse('$baseUrl/index.php?action=getMemberChantingHistory&memberNo=$memberNo&year=$year&group=$groupCode');
+      // 🔥 改打 get_year_stats.php，並且把 group 參數帶上
+      final url = Uri.parse('${baseUrl}get_year_stats.php?action=getMemberChantingHistory&memberNo=$memberNo&year=$year&group=$groupCode');
       debugPrint('🚀 [http] 準備抓年度: $url');
 
       final response = await http.get(url).timeout(const Duration(seconds: 60));
