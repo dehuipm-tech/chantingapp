@@ -123,10 +123,27 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
   int _getAmount(String itemName, int month) {
     final itemRecs = _yearRecords[itemName];
     if (itemRecs == null) return 0;
+
+    // 🔥 狀況一：資料是 Map (例如 {"1": 100, "01": 200, "1月": 300})
     if (itemRecs is Map) {
-      final v = itemRecs['$month'] ?? itemRecs[month.toString().padLeft(2, '0')] ?? itemRecs[month] ?? 0;
-      return (v is num) ? v.toInt() : 0;
+      // 嘗試各種可能的 key 格式
+      final possibleKeys = [
+        '$month',                          // 1
+        month.toString().padLeft(2, '0'),  // 01
+        '${month}月',                       // 1月
+        '${month.toString().padLeft(2, '0')}月', // 01月
+      ];
+      
+      for (var key in possibleKeys) {
+        if (itemRecs.containsKey(key)) {
+          final v = itemRecs[key];
+          return (v is num) ? v.toInt() : 0;
+        }
+      }
+      return 0;
     }
+
+    // 🔥 狀況二：資料是 List (例如 [{"month": 1, "count": 100}, ...])
     if (itemRecs is List) {
       for (final rec in itemRecs) {
         if (rec is Map) {
@@ -138,6 +155,7 @@ class _CloudCalendarScreenState extends State<CloudCalendarScreen> {
         }
       }
     }
+
     return 0;
   }
 
