@@ -1,13 +1,13 @@
+import 'dart:async'; // 🔥 關鍵：用來處理 Completer
 import 'dart:convert';
-import 'dart:io'; // 🔥 處理 HttpClient 和憑證
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart'; // 🔥 關鍵：引入 Dio 的 IO 轉接器
+import 'package:dio/io.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
-
 
 class ApiService {
   ApiService._() {
@@ -16,44 +16,59 @@ class ApiService {
   
   static final ApiService instance = ApiService._();
   
-  // 🔥 1. 這裡改成新的主網域路徑 (結尾不要加斜線)
   static const String baseUrl = 'https://www.dhp.com.tw/tw-proxy-ei-ios/';
   
   late Dio _dio;
 
+  // 🔥 核心關鍵：確保所有的請求都會等待初始化完成
+  Completer<void>? _dioInitialized;
+
   Future<void> _initDio() async {
-    _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
-      headers: {'Content-Type': 'application/json'},
-    ));
+    _dioInitialized = Completer<void>();
 
-    // ============================================================
-    // 🟢 💡 完美修正版：改用新版「套件安全盾牌」，徹底解決 Xcode Archive 卡死報錯
-    // ============================================================
-    _dio.httpClientAdapter = IOHttpClientAdapter(
-      createHttpClient: () {
-        final client = HttpClient();
-        // 針對 OPPO/vivo/iOS 跨國憑證，100% 安全強行通過
-        client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-        return client;
-      },
-    );
+    try {
+      _dio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        headers: {'Content-Type': 'application/json'},
+      ));
 
-    final appDocDir = await getApplicationDocumentsDirectory();
-    final cookiePath = '${appDocDir.path}/.cookies/';
+      // 憑證設定
+      _dio.httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () {
+          final client = HttpClient();
+          client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+          return client;
+        },
+      );
 
-    
-    final cookieJar = PersistCookieJar(
-      ignoreExpires: true,
-      storage: FileStorage(cookiePath),
-    );
+      // 建立 Cookie 儲存空間
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final cookiePath = '${appDocDir.path}/.cookies/';
+      
+      final cookieJar = PersistCookieJar(
+        ignoreExpires: true,
+        storage: FileStorage(cookiePath),
+      );
 
-    _dio.interceptors.add(CookieManager(cookieJar));
-    
-    if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
+      _dio.interceptors.add(CookieManager(cookieJar));
+      
+      if (kDebugMode) {
+        _dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
+      }
+    } catch (e) {
+      debugPrint('❌ Dio 初始化失敗: $e');
+    } finally {
+      // 🔥 無論成功或失敗，都標記為「已初始化完成」
+      _dioInitialized?.complete();
+    }
+  }
+
+  // 🔥 輔助函式：所有的 Dio 請求都必須先過這一關
+  Future<void> _ensureInitialized() async {
+    if (_dioInitialized != null && !_dioInitialized!.isCompleted) {
+      await _dioInitialized!.future;
     }
   }
 
@@ -85,6 +100,7 @@ class ApiService {
     required String icon,
   }) async {
     try {
+      await _ensureInitialized(); // 🔥 等待初始化
       final payload = {
         'data': {
           'group': groupCode,
@@ -93,8 +109,6 @@ class ApiService {
         }
       };
 
-      // 🔥 2. 去掉前面的斜線
-      // 強制把 group 灌在 URL 參數上
       final res = await _dio.post('add_chanting.php?action=addChantingRecord&group=$groupCode', data: payload);
       
       if (res.statusCode == 200) {
@@ -118,6 +132,7 @@ class ApiService {
     required String icon,
   }) async {
     try {
+      await _ensureInitialized(); // 🔥 等待初始化
       final payload = {
         'data': {
           'group': groupCode,
@@ -131,7 +146,6 @@ class ApiService {
         }
       };
 
-      // 🔥 3. 去掉前面的斜線，並強制加上 group 參數
       final res = await _dio.post('add_chanting.php?action=addChantingRecord&group=$groupCode', data: payload);
       
       if (res.statusCode == 200) {
@@ -147,9 +161,9 @@ class ApiService {
   /// 團體登入
   Future<Map<String, dynamic>?> loginGroup({required String inviteCode}) async {
     try {
+      await _ensureInitialized(); // 🔥 等待初始化
       final payload = {'login_type': 'group', 'invite_code': inviteCode};
       
-      // 🔥 4. 去掉前面的斜線
       final res = await _dio.post('index.php?action=login', data: payload);
 
       print('🔥 登入 API 回應: ${res.statusCode} - ${res.data}');
@@ -168,7 +182,7 @@ class ApiService {
   /// 查詢會員（把 groupCode 加進去）：
   Future<Map<String, dynamic>?> getMemberInfo(String memberNo, String groupCode) async {
     try {
-      // 🔥 5. 去掉前面的斜線，並加上 group 參數
+      await _ensureInitialized(); // 🔥 等待初始化
       final res = await _dio.get('index.php?action=getMemberByNoForChanting&no=$memberNo&group=$groupCode');
       if (res.statusCode == 200) {
         final json = res.data;
@@ -185,7 +199,7 @@ class ApiService {
     }
   }
 
-  /// 每日紀錄 (這裡是直接寫死全網址，所以不用改)
+  /// 每日紀錄
   Future<Map<String, dynamic>?> fetchDailyHistory(String memberNo, int year, int month, String groupCode) async {
     try {
       final url = Uri.parse('$baseUrl/index.php?action=getMemberChantingDailyHistory&memberNo=$memberNo&year=$year&month=$month&group=$groupCode');
@@ -204,7 +218,7 @@ class ApiService {
     }
   }
 
-  /// 年度統計 (這裡是直接寫死全網址，所以不用改)
+  /// 年度統計
   Future<Map<String, dynamic>?> fetchYearStats(String memberNo, int year, String groupCode) async {
     try {
       final url = Uri.parse('$baseUrl/index.php?action=getMemberChantingHistory&memberNo=$memberNo&year=$year&group=$groupCode');
@@ -228,6 +242,7 @@ class ApiService {
     String id, int count, String remark, {String? itemName, String? icon, required String groupCode}
   ) async {
     try {
+      await _ensureInitialized(); // 🔥 等待初始化
       final body = {
         'data': {
           'recordId': id,
@@ -239,7 +254,6 @@ class ApiService {
         }
       };
 
-      // 🔥 6. 去掉前面的斜線，並強制加上 group 參數
       final res = await _dio.post('update_chanting.php?action=updateChantingRecord&group=$groupCode', data: body);
       
       if (res.statusCode == 200) {
@@ -258,6 +272,7 @@ class ApiService {
     required String phoneLast3,
   }) async {
     try {
+      await _ensureInitialized(); // 🔥 等待初始化
       final payload = {
         'login_type': 'personal',
         'member_no': memberNo,
@@ -265,7 +280,6 @@ class ApiService {
         'item_mode': 'mixed',
       };
       
-      // 🔥 7. 去掉前面的斜線
       final res = await _dio.post('index.php?action=login', data: payload);
       
       if (res.statusCode == 200) {
@@ -287,6 +301,7 @@ class ApiService {
     required String loginType,
   }) async {
     try {
+      await _ensureInitialized(); // 🔥 等待初始化
       final payload = {
         'action': 'registerMember',
         'login_type': loginType,
@@ -295,7 +310,6 @@ class ApiService {
         'group_invite': groupInvite,
       };
 
-      // 🔥 8. 去掉前面的斜線
       final res = await _dio.post('index.php?action=registerMember', data: payload);
 
       if (res.statusCode == 200) {
@@ -314,7 +328,7 @@ class ApiService {
     required String phone,
   }) async {
     try {
-      // 🔥 9. 去掉前面的斜線
+      await _ensureInitialized(); // 🔥 等待初始化
       final res = await _dio.get(
         'index.php?action=findMember&name=${Uri.encodeComponent(name)}&phone=${Uri.encodeComponent(phone)}',
       );
