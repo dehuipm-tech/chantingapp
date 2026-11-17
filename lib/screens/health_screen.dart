@@ -288,7 +288,9 @@ class _HealthScreenState extends State<HealthScreen> {
                 const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('目前無健康紀錄', style: TextStyle(color: Colors.grey))))
               else
                 // 🔥 核心修改：日期由新到舊排序，並顯示備註
-                ...(_records.entries.toList()..sort((a, b) => b.key.compareTo(a.key))).map((entry) {
+                ...(_records.entries.toList()
+                    ..sort((a, b) => DateTime.parse(b.key).compareTo(DateTime.parse(a.key)))
+                ).map((entry) {
                   final date = entry.key;
                   final r = entry.value;
                   return Container(
