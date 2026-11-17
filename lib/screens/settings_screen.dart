@@ -669,7 +669,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ============================================================
   Widget _buildLoggedInView(AuthProvider auth) {
     return SingleChildScrollView(
-      // 🔥 修改這裡：加入 bottom: 100，保留底部給導覽列的空間
       padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -722,38 +721,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildManualUploadForm(auth),
           const SizedBox(height: 40),
 
-          // 🔥 刪除帳號區塊（加這裡）
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF5F5),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFFFCDD2)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('⚠️ 刪除帳號',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFC62828))),
-                const SizedBox(height: 8),
-                const Text('刪除後，您的帳號與所有誦經紀錄將被永久移除，無法復原。',
-                    style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.5)),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => _showDeleteAccountDialog(auth),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFC62828),
-                      side: const BorderSide(color: Color(0xFFC62828)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: const Text('刪除我的帳號',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
+          // 🔥 刪除帳號區塊（精簡版小按鈕）
+          Center(
+            child: TextButton.icon(
+              onPressed: () => _showDeleteAccountDialog(auth),
+              icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 18),
+              label: const Text(
+                '刪除帳號', 
+                style: TextStyle(color: Colors.grey, fontSize: 13, decoration: TextDecoration.underline),
+              ),
             ),
           ),
 
