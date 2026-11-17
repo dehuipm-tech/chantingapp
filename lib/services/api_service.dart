@@ -370,7 +370,7 @@ class ApiService {
       };
 
       final res = await _dio.post(
-        'delete_account.php?action=deleteAccount&group=$groupCode',
+        'index.php?action=deleteAccount&group=$groupCode',
         data: payload,
       );
 
