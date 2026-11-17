@@ -28,6 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   
   final _loginInviteCtrl = TextEditingController();
   final _loginMemberNoCtrl = TextEditingController();
+  final _loginCodeCtrl = TextEditingController(); // 🔥 新增這行登入碼
   
   final _groupRegInviteCtrl = TextEditingController();
   final _groupRegNameCtrl = TextEditingController();
@@ -61,6 +62,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _groupRegInviteCtrl.dispose();
     _groupRegNameCtrl.dispose();
     _groupRegCodeCtrl.dispose();
+    _loginCodeCtrl.dispose(); // 🔥 新增這行登入碼
     super.dispose();
   }
 
@@ -223,6 +225,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 6),
         const Text('💡 登入後系統會記住您的編號，上傳時不需再輸入。', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
         
+        const SizedBox(height: 16), // 新增間距
+
+        // 🔥 新增：登入碼輸入框
+        const Text('🔑 登入碼', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5A3A7A), fontSize: 15)),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _loginCodeCtrl,
+          style: const TextStyle(color: Colors.black87, fontSize: 16),
+          decoration: inputDecoration.copyWith(hintText: '請輸入登入碼（3~10位數字）'),
+          keyboardType: TextInputType.number,
+          obscureText: true, // 遮蔽輸入
+        ),
+        
         const SizedBox(height: 24),
 
         ElevatedButton(
@@ -334,15 +349,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _doLogin() async {
     final invite = _loginInviteCtrl.text.trim().toUpperCase();
     final memberNo = _loginMemberNoCtrl.text.trim();
+    final loginCode = _loginCodeCtrl.text.trim(); // 🔥 新增
 
     if (invite.isEmpty) { _showErrorDialog('輸入錯誤', '請輸入群組代碼'); return; }
     if (memberNo.isEmpty) { _showErrorDialog('輸入錯誤', '請輸入會員編號'); return; }
+    if (loginCode.isEmpty) { _showErrorDialog('輸入錯誤', '請輸入登入碼'); return; } // 🔥 新增
 
     setState(() => _isLoggingIn = true);
     final auth = context.read<AuthProvider>();
 
-    // 1. 驗證邀請碼 (取得組別資訊)
-    final loginData = await ApiService.instance.loginGroup(inviteCode: invite);
+    // 1. 驗證邀請碼 (取得組別資訊) 把 loginCode 傳給 loginGroup
+    final loginData = await ApiService.instance.loginGroup(
+      inviteCode: invite, 
+      memberNo: memberNo,     // 新增傳入
+      loginCode: loginCode,   // 新增傳入
+    );
 
     if (loginData == null || loginData['success'] != true) {
       if (mounted) setState(() => _isLoggingIn = false);
@@ -700,6 +721,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // 📤 標題與表單 (完全復刻截圖)
           _buildManualUploadForm(auth),
           const SizedBox(height: 40),
+
+          // 🔥 刪除帳號區塊（加這裡）
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF5F5),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFFCDD2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('⚠️ 刪除帳號',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFC62828))),
+                const SizedBox(height: 8),
+                const Text('刪除後，您的帳號與所有誦經紀錄將被永久移除，無法復原。',
+                    style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.5)),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => _showDeleteAccountDialog(auth),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFC62828),
+                      side: const BorderSide(color: Color(0xFFC62828)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text('刪除我的帳號',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -1046,6 +1104,102 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+
+
+    void _showDeleteAccountDialog(AuthProvider auth) {
+    final confirmCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(children: [
+          Text('⚠️', style: TextStyle(fontSize: 24)),
+          SizedBox(width: 8),
+          Text('確認刪除帳號', style: TextStyle(fontWeight: FontWeight.bold)),
+        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('此操作無法復原。刪除後，您的帳號與所有誦經紀錄將被永久移除。',
+                style: TextStyle(fontSize: 14, height: 1.5)),
+            const SizedBox(height: 16),
+            const Text('請輸入您的會員編號以確認：',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: confirmCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: auth.state.memberNo,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          ElevatedButton(
+            onPressed: () async {
+              if (confirmCtrl.text.trim() != auth.state.memberNo) {
+                _showSnack('⚠️ 會員編號輸入錯誤');
+                return;
+              }
+              Navigator.pop(ctx);
+              await _doDeleteAccount(auth);
+            },
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
+            child: const Text('確認刪除'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _doDeleteAccount(AuthProvider auth) async {
+    final result = await ApiService.instance.deleteAccount(
+      memberNo: auth.state.memberNo,
+      groupCode: auth.state.groupCode.isNotEmpty ? auth.state.groupCode : auth.state.inviteCode,
+    );
+
+    if (!mounted) return;
+
+    if (result != null && result['success'] == true) {
+      await auth.logout();
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          content: const Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('✅', style: TextStyle(fontSize: 54)),
+            SizedBox(height: 12),
+            Text('帳號已刪除', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            Text('您的帳號與相關資料已移除，感謝您的使用。',
+                textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.black54)),
+          ]),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5A3A7A), foregroundColor: Colors.white),
+                child: const Text('我知道了'),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      _showSnack('❌ 刪除失敗：${result?['message'] ?? '請稍後再試'}');
+    }
   }
 
   void _showSnack(String msg) {

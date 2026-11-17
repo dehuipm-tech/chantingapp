@@ -159,10 +159,19 @@ class ApiService {
   }
 
   /// 團體登入
-  Future<Map<String, dynamic>?> loginGroup({required String inviteCode}) async {
+   Future<Map<String, dynamic>?> loginGroup({
+    required String inviteCode,
+    required String memberNo,   // 🔥 新增
+    required String loginCode,  // 🔥 新增
+  }) async {
     try {
       await _ensureInitialized(); // 🔥 等待初始化
-      final payload = {'login_type': 'group', 'invite_code': inviteCode};
+      final payload = {
+        'login_type': 'group', 
+        'invite_code': inviteCode,
+        'member_no': memberNo,    // 🔥 新增
+        'login_code': loginCode,  // 🔥 新增
+      };
       
       final res = await _dio.post('index.php?action=login', data: payload);
 
@@ -344,4 +353,39 @@ class ApiService {
       return null;
     }
   }
+
+
+    /// 刪除帳號
+  Future<Map<String, dynamic>?> deleteAccount({
+    required String memberNo,
+    required String groupCode,
+  }) async {
+    try {
+      await _ensureInitialized();
+      final payload = {
+        'data': {
+          'memberNo': memberNo,
+          'group': groupCode,
+        }
+      };
+
+      final res = await _dio.post(
+        'delete_account.php?action=deleteAccount&group=$groupCode',
+        data: payload,
+      );
+
+      if (res.statusCode == 200) {
+        return res.data;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ 刪除帳號錯誤: $e');
+      return null;
+    }
+  }
+
+
+
+
+
 }
