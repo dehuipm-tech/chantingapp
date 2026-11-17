@@ -1083,8 +1083,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
 
-    void _showDeleteAccountDialog(AuthProvider auth) {
-    final confirmCtrl = TextEditingController();
+      void _showDeleteAccountDialog(AuthProvider auth) {
+    final inviteCtrl = TextEditingController();
+    final memberNoCtrl = TextEditingController();
+    final loginCodeCtrl = TextEditingController();
 
     showDialog(
       context: context,
@@ -1096,36 +1098,76 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SizedBox(width: 8),
           Text('確認刪除帳號', style: TextStyle(fontWeight: FontWeight.bold)),
         ]),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('此操作無法復原。刪除後，您的帳號與所有誦經紀錄將被永久移除。',
-                style: TextStyle(fontSize: 14, height: 1.5)),
-            const SizedBox(height: 16),
-            const Text('請輸入您的會員編號以確認：',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            TextField(
-              controller: confirmCtrl,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                hintText: auth.state.memberNo,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('此操作無法復原。刪除後，您的帳號與所有誦經紀錄將被永久移除。',
+                  style: TextStyle(fontSize: 14, height: 1.5)),
+              const SizedBox(height: 16),
+              const Text('請輸入以下資訊以確認身份：',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              
+              // 邀請碼
+              TextField(
+                controller: inviteCtrl,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  labelText: '團體邀請碼',
+                  hintText: '例如：G02',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+
+              // 會員編號
+              TextField(
+                controller: memberNoCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: '會員編號',
+                  hintText: '例如：02145',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // 登入碼
+              TextField(
+                controller: loginCodeCtrl,
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: '登入碼',
+                  hintText: '請輸入您的登入碼',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
           ElevatedButton(
             onPressed: () async {
-              if (confirmCtrl.text.trim() != auth.state.memberNo) {
-                _showSnack('⚠️ 會員編號輸入錯誤');
+              // 檢查是否都有填寫
+              if (inviteCtrl.text.trim().isEmpty || memberNoCtrl.text.trim().isEmpty || loginCodeCtrl.text.trim().isEmpty) {
+                _showSnack('⚠️ 三項資料皆需填寫');
                 return;
               }
+              
+              // 關閉彈窗
               Navigator.pop(ctx);
-              await _doDeleteAccount(auth);
+              
+              // 呼叫刪除
+              await _doDeleteAccount(
+                auth,
+                inviteCode: inviteCtrl.text.trim().toUpperCase(),
+                memberNo: memberNoCtrl.text.trim(),
+                loginCode: loginCodeCtrl.text.trim(),
+              );
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
@@ -1136,16 +1178,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _doDeleteAccount(AuthProvider auth) async {
+  Future<void> _doDeleteAccount(
+    AuthProvider auth, {
+    required String inviteCode,
+    required String memberNo,
+    required String loginCode,
+  }) async {
     final result = await ApiService.instance.deleteAccount(
-      memberNo: auth.state.memberNo,
+      memberNo: memberNo,
       groupCode: auth.state.groupCode.isNotEmpty ? auth.state.groupCode : auth.state.inviteCode,
+      inviteCode: inviteCode, // 🔥 傳入
+      loginCode: loginCode,   // 🔥 傳入
     );
 
     if (!mounted) return;
 
     if (result != null && result['success'] == true) {
       await auth.logout();
+      // ... 下面顯示成功彈窗的程式碼保持不變 ...
       if (!mounted) return;
       showDialog(
         context: context,

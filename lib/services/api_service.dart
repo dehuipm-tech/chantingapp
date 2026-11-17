@@ -355,10 +355,12 @@ class ApiService {
   }
 
 
-    /// 刪除帳號
+      /// 刪除帳號
   Future<Map<String, dynamic>?> deleteAccount({
     required String memberNo,
     required String groupCode,
+    required String inviteCode, // 🔥 新增
+    required String loginCode,  // 🔥 新增
   }) async {
     try {
       await _ensureInitialized();
@@ -366,11 +368,14 @@ class ApiService {
         'data': {
           'memberNo': memberNo,
           'group': groupCode,
+          'inviteCode': inviteCode, // 🔥 新增
+          'loginCode': loginCode,   // 🔥 新增
         }
       };
 
+      // 🔥 關鍵：把網址改成 index.php
       final res = await _dio.post(
-        'index.php?action=deleteAccount&group=$groupCode',
+        'index.php?action=deleteAccount&group=$groupCode', 
         data: payload,
       );
 
@@ -383,7 +388,6 @@ class ApiService {
       return null;
     }
   }
-
 
 
 
