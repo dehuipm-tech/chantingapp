@@ -1109,7 +1109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Text('請輸入以下資訊以確認身份：',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
-              
+
               // 邀請碼
               TextField(
                 controller: inviteCtrl,
@@ -1152,22 +1152,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
           ElevatedButton(
             onPressed: () async {
-              // 檢查是否都有填寫
-              if (inviteCtrl.text.trim().isEmpty || memberNoCtrl.text.trim().isEmpty || loginCodeCtrl.text.trim().isEmpty) {
+              // 1. 檢查是否都有填寫
+              if (inviteCtrl.text.trim().isEmpty ||
+                  memberNoCtrl.text.trim().isEmpty ||
+                  loginCodeCtrl.text.trim().isEmpty) {
                 _showSnack('⚠️ 三項資料皆需填寫');
                 return;
               }
-              
-              // 關閉彈窗
+
+              final inviteCode = inviteCtrl.text.trim().toUpperCase();
+              final memberNo = memberNoCtrl.text.trim();
+              final loginCode = loginCodeCtrl.text.trim();
+
+              // 2. 關閉原本的輸入彈窗
               Navigator.pop(ctx);
-              
-              // 呼叫刪除
-              await _doDeleteAccount(
-                auth,
-                inviteCode: inviteCtrl.text.trim().toUpperCase(),
-                memberNo: memberNoCtrl.text.trim(),
-                loginCode: loginCodeCtrl.text.trim(),
+
+              // 3. 🔥 顯示轉圈圈載入彈窗（防止重複點擊與空白等待）
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => PopScope(
+                  canPop: false,
+                  child: AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    content: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Row(
+                        children: [
+                          CircularProgressIndicator(color: Color(0xFFC62828)),
+                          SizedBox(width: 20),
+                          Expanded(
+                            child: Text(
+                              '正在刪除帳號與紀錄，請稍候...',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               );
+
+              try {
+                // 4. 執行刪除 API
+                await _doDeleteAccount(
+                  auth,
+                  inviteCode: inviteCode,
+                  memberNo: memberNo,
+                  loginCode: loginCode,
+                );
+              } finally {
+                // 5. 🔥 無論成功或失敗，自動關閉轉圈圈彈窗
+                if (mounted && Navigator.of(context, rootNavigator: true).canPop()) {
+                  Navigator.of(context, rootNavigator: true).pop();
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
@@ -1177,6 +1217,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+
 
   Future<void> _doDeleteAccount(
     AuthProvider auth, {
