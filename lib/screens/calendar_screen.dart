@@ -455,6 +455,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
   }
+  
 
   Widget _buildMiniSummaryBox(String label, String value, Color color) {
     return Expanded(

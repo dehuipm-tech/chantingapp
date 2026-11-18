@@ -1087,136 +1087,138 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final inviteCtrl = TextEditingController();
     final memberNoCtrl = TextEditingController();
     final loginCodeCtrl = TextEditingController();
+    bool isDeleting = false; // 🔥 控制是否正在刪除中
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Row(children: [
-          Text('⚠️', style: TextStyle(fontSize: 24)),
-          SizedBox(width: 8),
-          Text('確認刪除帳號', style: TextStyle(fontWeight: FontWeight.bold)),
-        ]),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('此操作無法復原。刪除後，您的帳號與所有誦經紀錄將被永久移除。',
-                  style: TextStyle(fontSize: 14, height: 1.5)),
-              const SizedBox(height: 16),
-              const Text('請輸入以下資訊以確認身份：',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return PopScope(
+            canPop: !isDeleting, // 刪除過程中禁止按返回鍵關閉
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: const Row(children: [
+                Text('⚠️', style: TextStyle(fontSize: 24)),
+                SizedBox(width: 8),
+                Text('確認刪除帳號', style: TextStyle(fontWeight: FontWeight.bold)),
+              ]),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('此操作無法復原。刪除後，您的帳號與所有誦經紀錄將被永久移除。',
+                        style: TextStyle(fontSize: 14, height: 1.5)),
+                    const SizedBox(height: 16),
+                    const Text('請輸入以下資訊以確認身份：',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
 
-              // 邀請碼
-              TextField(
-                controller: inviteCtrl,
-                textCapitalization: TextCapitalization.characters,
-                decoration: InputDecoration(
-                  labelText: '團體邀請碼',
-                  hintText: '',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // 會員編號
-              TextField(
-                controller: memberNoCtrl,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: '會員編號',
-                  hintText: '',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // 登入碼
-              TextField(
-                controller: loginCodeCtrl,
-                keyboardType: TextInputType.number,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: '登入碼',
-                  hintText: '請輸入您的登入碼',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
-          ElevatedButton(
-            onPressed: () async {
-              // 1. 檢查是否都有填寫
-              if (inviteCtrl.text.trim().isEmpty ||
-                  memberNoCtrl.text.trim().isEmpty ||
-                  loginCodeCtrl.text.trim().isEmpty) {
-                _showSnack('⚠️ 三項資料皆需填寫');
-                return;
-              }
-
-              final inviteCode = inviteCtrl.text.trim().toUpperCase();
-              final memberNo = memberNoCtrl.text.trim();
-              final loginCode = loginCodeCtrl.text.trim();
-
-              // 2. 關閉原本的輸入彈窗
-              Navigator.pop(ctx);
-
-              // 3. 🔥 顯示轉圈圈載入彈窗（防止重複點擊與空白等待）
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (_) => PopScope(
-                  canPop: false,
-                  child: AlertDialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    content: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Row(
-                        children: [
-                          CircularProgressIndicator(color: Color(0xFFC62828)),
-                          SizedBox(width: 20),
-                          Expanded(
-                            child: Text(
-                              '正在刪除帳號與紀錄，請稍候...',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                        ],
+                    // 邀請碼
+                    TextField(
+                      controller: inviteCtrl,
+                      enabled: !isDeleting, // 刪除中鎖定輸入
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: InputDecoration(
+                        labelText: '團體邀請碼',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
-                  ),
-                ),
-              );
+                    const SizedBox(height: 8),
 
-              try {
-                // 4. 執行刪除 API
-                await _doDeleteAccount(
-                  auth,
-                  inviteCode: inviteCode,
-                  memberNo: memberNo,
-                  loginCode: loginCode,
-                );
-              } finally {
-                // 5. 🔥 無論成功或失敗，自動關閉轉圈圈彈窗
-                if (mounted && Navigator.of(context, rootNavigator: true).canPop()) {
-                  Navigator.of(context, rootNavigator: true).pop();
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
-            child: const Text('確認刪除'),
-          ),
-        ],
+                    // 會員編號
+                    TextField(
+                      controller: memberNoCtrl,
+                      enabled: !isDeleting,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: '會員編號',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // 登入碼
+                    TextField(
+                      controller: loginCodeCtrl,
+                      enabled: !isDeleting,
+                      keyboardType: TextInputType.number,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: '登入碼',
+                        hintText: '請輸入您的登入碼',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isDeleting ? null : () => Navigator.pop(ctx),
+                  child: const Text('取消'),
+                ),
+                ElevatedButton(
+                  onPressed: isDeleting
+                      ? null
+                      : () async {
+                          if (inviteCtrl.text.trim().isEmpty ||
+                              memberNoCtrl.text.trim().isEmpty ||
+                              loginCodeCtrl.text.trim().isEmpty) {
+                            _showSnack('⚠️ 三項資料皆需填寫');
+                            return;
+                          }
+
+                          // 🔥 1. 切換為轉圈圈狀態，不提前關閉視窗
+                          setDialogState(() {
+                            isDeleting = true;
+                          });
+
+                          // 🔥 2. 執行刪除（若成功，_doDeleteAccount 會直接跳轉回登入頁並自動帶走此視窗）
+                          await _doDeleteAccount(
+                            auth,
+                            inviteCode: inviteCtrl.text.trim().toUpperCase(),
+                            memberNo: memberNoCtrl.text.trim(),
+                            loginCode: loginCodeCtrl.text.trim(),
+                          );
+
+                          // 🔥 3. 若刪除失敗仍停留在原頁面，恢復按鈕讓使用者可重試或取消
+                          if (ctx.mounted) {
+                            setDialogState(() {
+                              isDeleting = false;
+                            });
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFC62828),
+                      foregroundColor: Colors.white),
+                  child: isDeleting
+                      ? const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Text('刪除中...'),
+                          ],
+                        )
+                      : const Text('確認刪除'),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
+
 
 
   Future<void> _doDeleteAccount(
