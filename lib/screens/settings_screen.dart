@@ -1083,7 +1083,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
 
-      void _showDeleteAccountDialog(AuthProvider auth) {
+  void _showDeleteAccountDialog(AuthProvider auth) {
     final inviteCtrl = TextEditingController();
     final memberNoCtrl = TextEditingController();
     final loginCodeCtrl = TextEditingController();
@@ -1116,7 +1116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 textCapitalization: TextCapitalization.characters,
                 decoration: InputDecoration(
                   labelText: '團體邀請碼',
-                  hintText: '例如：G02',
+                  hintText: '',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -1128,7 +1128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: '會員編號',
-                  hintText: '例如：02145',
+                  hintText: '',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),

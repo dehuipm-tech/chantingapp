@@ -355,27 +355,29 @@ class ApiService {
   }
 
 
-      /// 刪除帳號
+  /// 刪除帳號
   Future<Map<String, dynamic>?> deleteAccount({
     required String memberNo,
     required String groupCode,
-    required String inviteCode, // 🔥 新增
-    required String loginCode,  // 🔥 新增
+    required String inviteCode,
+    required String loginCode,
   }) async {
     try {
       await _ensureInitialized();
+      
+      // 🔥 核心修改：把 action 直接塞進 JSON 本體，確保 PHP 一定收得到
       final payload = {
+        'action': 'deleteAccount', // 這行是關鍵
         'data': {
           'memberNo': memberNo,
           'group': groupCode,
-          'inviteCode': inviteCode, // 🔥 新增
-          'loginCode': loginCode,   // 🔥 新增
+          'inviteCode': inviteCode,
+          'loginCode': loginCode,
         }
       };
 
-      // 🔥 關鍵：把網址改成 index.php
       final res = await _dio.post(
-        'index.php?action=deleteAccount&group=$groupCode', 
+        'index.php', // 網址保持乾淨即可
         data: payload,
       );
 
