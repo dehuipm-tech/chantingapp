@@ -1087,7 +1087,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final inviteCtrl = TextEditingController();
     final memberNoCtrl = TextEditingController();
     final loginCodeCtrl = TextEditingController();
-    bool isDeleting = false; // 🔥 控制是否正在刪除中
+    bool isDeleting = false;
 
     showDialog(
       context: context,
@@ -1095,7 +1095,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           return PopScope(
-            canPop: !isDeleting, // 刪除過程中禁止按返回鍵關閉
+            canPop: !isDeleting,
             child: AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: const Row(children: [
@@ -1118,7 +1118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     // 邀請碼
                     TextField(
                       controller: inviteCtrl,
-                      enabled: !isDeleting, // 刪除中鎖定輸入
+                      enabled: !isDeleting,
                       textCapitalization: TextCapitalization.characters,
                       decoration: InputDecoration(
                         labelText: '團體邀請碼',
@@ -1170,20 +1170,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             return;
                           }
 
-                          // 🔥 1. 切換為轉圈圈狀態，不提前關閉視窗
                           setDialogState(() {
                             isDeleting = true;
                           });
 
-                          // 🔥 2. 執行刪除（若成功，_doDeleteAccount 會直接跳轉回登入頁並自動帶走此視窗）
+                          // 🔥 把這個視窗的 ctx 交給 _doDeleteAccount
                           await _doDeleteAccount(
                             auth,
                             inviteCode: inviteCtrl.text.trim().toUpperCase(),
                             memberNo: memberNoCtrl.text.trim(),
                             loginCode: loginCodeCtrl.text.trim(),
+                            dialogContext: ctx,
                           );
 
-                          // 🔥 3. 若刪除失敗仍停留在原頁面，恢復按鈕讓使用者可重試或取消
+                          // 若刪除失敗還停留在原視窗，才恢復按鈕狀態
                           if (ctx.mounted) {
                             setDialogState(() {
                               isDeleting = false;
@@ -1221,29 +1221,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 
 
-  Future<void> _doDeleteAccount(
+
+    Future<void> _doDeleteAccount(
     AuthProvider auth, {
     required String inviteCode,
     required String memberNo,
     required String loginCode,
+    BuildContext? dialogContext,
   }) async {
     final result = await ApiService.instance.deleteAccount(
       memberNo: memberNo,
       groupCode: auth.state.groupCode.isNotEmpty ? auth.state.groupCode : auth.state.inviteCode,
-      inviteCode: inviteCode, // 🔥 傳入
-      loginCode: loginCode,   // 🔥 傳入
+      inviteCode: inviteCode,
+      loginCode: loginCode,
     );
 
     if (!mounted) return;
 
     if (result != null && result['success'] == true) {
+      // 🔥 1. 先立刻關閉原本轉圈圈的「確認刪除帳號」視窗
+      if (dialogContext != null && dialogContext.mounted) {
+        Navigator.of(dialogContext).pop();
+      }
+
+      // 🔥 2. 執行登出（切換回登入頁）
       await auth.logout();
-      // ... 下面顯示成功彈窗的程式碼保持不變 ...
+
       if (!mounted) return;
+
+      // 🔥 3. 單獨顯示「✅ 帳號已刪除」成功視窗（不會再重疊）
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
+        builder: (successCtx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           content: const Column(mainAxisSize: MainAxisSize.min, children: [
             Text('✅', style: TextStyle(fontSize: 54)),
@@ -1257,7 +1267,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
+                onPressed: () => Navigator.of(successCtx, rootNavigator: true).pop(),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF5A3A7A), foregroundColor: Colors.white),
                 child: const Text('我知道了'),
@@ -1270,6 +1280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _showSnack('❌ 刪除失敗：${result?['message'] ?? '請稍後再試'}');
     }
   }
+
 
   void _showSnack(String msg) {
     if (!mounted) return;
