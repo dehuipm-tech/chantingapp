@@ -280,7 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Row(
           children: [
-            const Text('🏷️ 邀請碼 ', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5A3A7A))),
+            const Text('🏷️ 邀請碼: G02 ', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5A3A7A))),
             Text('*', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
           ],
         ),

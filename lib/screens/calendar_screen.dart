@@ -400,12 +400,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '⏱️ ${log.time} | ${log.remark}',
+                              '📅 ${log.date} ${log.time} | ${log.remark}',
                               style: TextStyle(fontSize: 11, color: isSynced ? Colors.grey : Colors.white70),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                            ),
-                            if (isSynced)
+                            ),if (isSynced)
                               const Padding(
                                 padding: EdgeInsets.only(top: 4),
                                 child: Text('(已上傳)', style: TextStyle(fontSize: 10, color: Colors.green)),
